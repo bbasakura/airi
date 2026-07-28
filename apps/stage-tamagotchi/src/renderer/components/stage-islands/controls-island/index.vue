@@ -156,7 +156,7 @@ function resetMainWindowPosition() {
             :icon-class="adjustStyleClasses.icon"
           />
 
-          <div grid grid-cols-3 gap-2>
+          <div grid grid-cols-4 gap-2>
             <ControlButtonTooltip disable-hoverable-content>
               <ControlButton :button-style="adjustStyleClasses.button" @click="openSettings({ route: '/settings' })">
                 <div i-solar:settings-minimalistic-outline :class="adjustStyleClasses.icon" text="neutral-800 dark:neutral-300" />
