@@ -1120,6 +1120,7 @@ export const useHearingSpeechInputPipeline = defineStore('modules:hearing:speech
       const form = new FormData()
       form.append('file', recording, 'recording.wav')
       form.append('model', 'base')
+      form.append('language', 'zh')
       const response = await fetch('http://127.0.0.1:17493/transcribe', {
         method: 'POST',
         body: form,
@@ -1128,7 +1129,11 @@ export const useHearingSpeechInputPipeline = defineStore('modules:hearing:speech
         return undefined
       const data = await response.json()
       const text = String(data?.text || '').trim()
-      if (!text || HALLUCINATIONS.has(text.toLowerCase())) {
+
+      // Filter out Whisper silence/noise hallucinations (English noise words, Korean noise phrases)
+      const isKoreanHallucination = /[\uac00-\ud7a3]/.test(text)
+      const isKnownHallucination = HALLUCINATIONS.has(text.toLowerCase())
+      if (!text || isKoreanHallucination || isKnownHallucination) {
         console.info('[Hearing Pipeline] Filtered Whisper silence hallucination:', text)
         return undefined
       }
