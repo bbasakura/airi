@@ -566,17 +566,22 @@ async function startAudioInteractionConsumers() {
     if (requestGate.skip)
       return
 
-    await transcribeForMediaStream(currentStream, {
-      onSentenceEnd: handleStreamingSentenceEnd,
-      onSpeechEnd: handleStreamingSpeechEnd,
-    })
+    try {
+      await transcribeForMediaStream(currentStream, {
+        onSentenceEnd: handleStreamingSentenceEnd,
+        onSpeechEnd: handleStreamingSpeechEnd,
+      })
+    }
+    catch {
+      streamingTranscriptionUnavailable.value = true
+    }
 
     if (inspectVoiceInputStreamingRequestGate().skip) {
       await stopStreamingTranscription(true)
       return
     }
 
-    if (transcriptionError.value) {
+    if (transcriptionError.value || streamingTranscriptionUnavailable.value) {
       streamingTranscriptionUnavailable.value = true
       await stopStreamingTranscription(true)
       console.warn('[Main Page] Streaming transcription unavailable; using recorder-backed fallback:', transcriptionError.value)
