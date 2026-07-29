@@ -194,7 +194,7 @@ export default defineConfig({
         },
       },
 
-      Inspect(),
+      ...(process.env.ENABLE_VITE_INSPECT === 'true' ? [Inspect()] : []),
 
       Yaml(),
 

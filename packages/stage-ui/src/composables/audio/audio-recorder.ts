@@ -104,6 +104,7 @@ export function useAudioRecorder(
       }
     }
 
+    setTimeout(() => { recording.value = undefined }, 1000)
     return audioBlob
   }
 

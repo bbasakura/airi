@@ -1,5 +1,6 @@
 @echo off
 chcp 65001 >nul
+set "NODE_OPTIONS=--max-old-space-size=1536"
 set "PATH=C:\Users\kk\AppData\Roaming\npm;D:\devsoft\nodejs;%PATH%"
 
 echo ===================================================
