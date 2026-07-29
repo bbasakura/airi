@@ -94,10 +94,24 @@ export function normalizeAvatarEvent(value) {
     }
   }
 
+  if (value?.type === 'audio-play' && typeof value.audioPath === 'string' && value.audioPath.startsWith('/v1/audio/')) {
+    return {
+      type: 'audio-play',
+      audioPath: value.audioPath,
+    }
+  }
+
   return undefined
 }
 
 export function companionEventToAvatarEvent(event) {
+  if (event?.type === 'assistant.speech.ready' && event.audioPath) {
+    return {
+      type: 'audio-play',
+      audioPath: event.audioPath,
+    }
+  }
+
   if (event?.type === 'turn.started') {
     return event.inputType === 'voice'
       ? createAvatarState('listening', 'starting')

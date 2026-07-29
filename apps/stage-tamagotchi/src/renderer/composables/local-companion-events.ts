@@ -1,5 +1,5 @@
 const DEFAULT_COMPANION_BASE_URL = 'http://127.0.0.1:17321'
-const AVATAR_EVENT_TYPES = ['state', 'audio-level', 'animation'] as const
+const AVATAR_EVENT_TYPES = ['state', 'audio-level', 'animation', 'audio-play'] as const
 
 interface EventSourceLike {
   addEventListener: (type: string, listener: EventListener) => void
@@ -29,6 +29,7 @@ export function connectLocalCompanionEvents({
   let activeSource: EventSourceLike | undefined
   let retryTimer: ReturnType<typeof setTimeout> | undefined
   let disposed = false
+  let activeAudio: HTMLAudioElement | undefined
 
   function scheduleReconnect() {
     if (disposed || retryTimer)
@@ -74,7 +75,16 @@ export function connectLocalCompanionEvents({
           return
 
         try {
-          onEvent(JSON.parse(event.data))
+          const parsed = JSON.parse(event.data)
+          if (parsed?.type === 'audio-play' && typeof parsed.audioPath === 'string') {
+            activeAudio?.pause()
+            const audio = new Audio(`${baseUrl.replace(/\/+$/, '')}${parsed.audioPath}`)
+            activeAudio = audio
+            audio.play().catch((error) => {
+              console.warn('[CompanionAvatar] Audio play failed:', error)
+            })
+          }
+          onEvent(parsed)
         }
         catch {
           // Ignore malformed local events and keep the stream alive.

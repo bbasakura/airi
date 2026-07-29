@@ -63,6 +63,14 @@ test('maps companion lifecycle events without exposing conversation text', () =>
   })
 
   assert.deepEqual(companionEventToAvatarEvent({
+    type: 'assistant.speech.ready',
+    audioPath: '/v1/audio/test-123',
+  }), {
+    type: 'audio-play',
+    audioPath: '/v1/audio/test-123',
+  })
+
+  assert.deepEqual(companionEventToAvatarEvent({
     type: 'avatar.state.changed',
     state: 'speaking',
   }), {

@@ -55,10 +55,16 @@ export interface CompanionAvatarAnimationEvent extends CompanionAvatarEventBase 
   requestId?: number
 }
 
+export interface CompanionAvatarAudioPlayEvent extends CompanionAvatarEventBase {
+  type: 'audio-play'
+  audioPath: string
+}
+
 export type CompanionAvatarEvent
   = | CompanionAvatarStateEvent
     | CompanionAvatarAudioLevelEvent
     | CompanionAvatarAnimationEvent
+    | CompanionAvatarAudioPlayEvent
 
 const activitySet = new Set<string>(COMPANION_AVATAR_ACTIVITIES)
 const phaseSet = new Set<string>(COMPANION_AVATAR_PHASES)
@@ -128,6 +134,14 @@ export function parseCompanionAvatarEvent(value: unknown): CompanionAvatarEvent 
       animation: value.animation as CompanionAvatarAnimation,
       ...(typeof value.source === 'string' ? { source: value.source } : {}),
       ...(Number.isSafeInteger(value.requestId) ? { requestId: Number(value.requestId) } : {}),
+    }
+  }
+
+  if (value.type === 'audio-play' && typeof value.audioPath === 'string' && value.audioPath.startsWith('/v1/audio/')) {
+    return {
+      ...base,
+      type: 'audio-play',
+      audioPath: value.audioPath,
     }
   }
 
