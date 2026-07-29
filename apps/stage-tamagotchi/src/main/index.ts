@@ -69,6 +69,8 @@ if (appUserDataPath) {
   app.setPath('userData', appUserDataPath)
 }
 
+app.commandLine.appendSwitch('autoplay-policy', 'no-user-gesture-required')
+
 // Thanks to [@blurymind](https://github.com/blurymind),
 //
 // When running Electron on Linux, navigator.gpu.requestAdapter() fails.
