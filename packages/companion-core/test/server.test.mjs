@@ -1,6 +1,12 @@
 import assert from 'node:assert/strict'
-import { once } from 'node:events'
+import path from 'node:path'
+// eslint-disable-next-line test/no-import-node-test
 import test from 'node:test'
+
+import { Buffer } from 'node:buffer'
+import { once } from 'node:events'
+import { mkdtemp, rm, writeFile } from 'node:fs/promises'
+import { tmpdir } from 'node:os'
 
 import { loadConfig } from '../src/config.mjs'
 import { createCompanionEvent } from '../src/protocol.mjs'
@@ -34,7 +40,7 @@ test('serves health and streamed turn events to loopback clients', async (t) => 
     },
   }
   const runtime = {
-    async *runTextTurn({ conversationId, text }) {
+    async* runTextTurn({ conversationId, text }) {
       yield createCompanionEvent('turn.started', {
         conversationId,
         turnId: 'turn-1',
@@ -65,7 +71,7 @@ test('serves health and streamed turn events to loopback clients', async (t) => 
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
-      Origin: 'http://localhost:5173',
+      'Origin': 'http://localhost:5173',
     },
     body: JSON.stringify({ text: '你好', speak: false }),
   })
@@ -124,7 +130,7 @@ test('accepts normalized avatar events without exposing arbitrary fields', async
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
-      Origin: 'codex-app://desktop',
+      'Origin': 'codex-app://desktop',
     },
     body: JSON.stringify({
       type: 'audio-level',
@@ -150,4 +156,45 @@ test('accepts normalized avatar events without exposing arbitrary fields', async
     }),
   })
   assert.equal(rejectedResponse.status, 422)
+})
+
+test('serves the configured local avatar model without exposing its file path', async (t) => {
+  const rootDir = await mkdtemp(path.join(tmpdir(), 'erii-avatar-'))
+  const modelPath = path.join(rootDir, 'avatar.vrm')
+  const modelBytes = Buffer.from('local-vrm-model')
+  await writeFile(modelPath, modelBytes)
+  t.after(() => rm(rootDir, { recursive: true, force: true }))
+
+  const { server, baseUrl } = await startTestServer({
+    config: loadConfig({
+      ERII_ROOT: rootDir,
+      ERII_AVATAR_MODEL: modelPath,
+    }),
+    chat: { health: async () => ({ ok: true }) },
+    voicebox: { health: async () => ({ ok: true }) },
+    runtime: { interrupt: () => false },
+  })
+  t.after(() => server.close())
+
+  const headResponse = await fetch(`${baseUrl}/v1/avatar/model`, {
+    method: 'HEAD',
+    headers: { Origin: 'http://localhost:5173' },
+  })
+  assert.equal(headResponse.status, 200)
+  assert.equal(headResponse.headers.get('content-length'), String(modelBytes.length))
+  assert.equal(headResponse.headers.get('accept-ranges'), 'bytes')
+  assert.equal(await headResponse.text(), '')
+
+  const rangeResponse = await fetch(`${baseUrl}/v1/avatar/model`, {
+    headers: {
+      Origin: 'http://localhost:5173',
+      Range: 'bytes=2-6',
+    },
+  })
+  assert.equal(rangeResponse.status, 206)
+  assert.equal(rangeResponse.headers.get('content-range'), `bytes 2-6/${modelBytes.length}`)
+  assert.deepEqual(Buffer.from(await rangeResponse.arrayBuffer()), modelBytes.subarray(2, 7))
+
+  const configResponse = await (await fetch(`${baseUrl}/v1/config`)).text()
+  assert.equal(configResponse.includes(modelPath), false)
 })

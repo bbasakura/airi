@@ -52,6 +52,7 @@ import {
 import { electronPluginToolsChanged } from '../shared/eventa/plugin/tools'
 import { initializeElectronAuthCallbackBridge } from './bridges/electron-auth-callback'
 import { initializeStageThreeRuntimeTraceBridge } from './bridges/stage-three-runtime-trace'
+import { initializeLocalCompanionAvatar } from './composables/local-companion-avatar'
 import { useLanguage } from './composables/use-language'
 import { createChatSyncWindowLifecycle, resolveInitialChatSyncRoutePath } from './stores/chat-sync-lifecycle'
 import { useTamagotchiMcpToolsStore } from './stores/mcp-tools'
@@ -198,6 +199,14 @@ function createFullStageRuntime() {
     async initialize() {
       analyticsStore.initialize()
       await displayModelsStore.initialize()
+      await initializeLocalCompanionAvatar({
+        baseUrl: import.meta.env.VITE_COMPANION_BASE_URL || 'http://127.0.0.1:17321',
+        registerPreset: model => displayModelsStore.registerDisplayModelPreset(model),
+        selectModel: (id) => {
+          settingsStore.stageModelSelected = id
+        },
+        storage: localStorage,
+      })
       cardStore.initialize()
 
       await displayModelsStore.loadDisplayModelsFromIndexedDB()

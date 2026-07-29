@@ -1,6 +1,7 @@
 import assert from 'node:assert/strict'
 import path from 'node:path'
-import test from 'node:test'
+
+import test from 'vitest'
 
 import { loadConfig, normalizeHttpUrl, publicConfig } from '../src/config.mjs'
 import { createCompanionEvent, serializeSse } from '../src/protocol.mjs'
@@ -48,7 +49,11 @@ test('resolves mutable runtime directories beneath the Erii root', () => {
     logsDir: path.join(rootDir, 'logs'),
     configDir: path.join(rootDir, 'config'),
   })
+  assert.deepEqual(config.avatar, {
+    modelPath: path.join(rootDir, 'assets', 'local', 'frieren', 'model.vrm'),
+  })
   assert.equal('runtime' in publicConfig(config), false)
+  assert.equal('avatar' in publicConfig(config), false)
 })
 
 test('serializes normalized companion events as SSE', () => {

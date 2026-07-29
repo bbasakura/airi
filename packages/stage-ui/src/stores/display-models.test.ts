@@ -42,4 +42,23 @@ describe('display models store', () => {
 
     expect(resolved).toEqual(model)
   })
+
+  it('registers local URL presets before loading persisted display models', async () => {
+    const store = useDisplayModelsStore()
+    const preset = {
+      id: 'erii-local-avatar',
+      format: DisplayModelFormat.VRM,
+      type: 'url' as const,
+      url: 'http://127.0.0.1:17321/v1/avatar/model',
+      name: 'Frieren (Local)',
+      importedAt: 2,
+    }
+
+    store.registerDisplayModelPreset(preset)
+    store.registerDisplayModelPreset(preset)
+    await store.loadDisplayModelsFromIndexedDB()
+
+    expect(store.displayModels.filter(model => model.id === preset.id)).toEqual([preset])
+    expect(await store.getDisplayModel(preset.id)).toEqual(preset)
+  })
 })

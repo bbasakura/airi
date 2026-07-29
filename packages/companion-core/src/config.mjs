@@ -1,4 +1,6 @@
 import path from 'node:path'
+import process from 'node:process'
+
 import { fileURLToPath } from 'node:url'
 
 const DEFAULT_SYSTEM_PROMPT = '你是一个自然、可靠、有长期陪伴感的中文 AI 伴侣。始终使用简体中文，回答口语化、简洁，不使用 Markdown。'
@@ -44,6 +46,13 @@ export function loadConfig(env = process.env) {
       cacheDir: resolveRuntimePath(env.ERII_CACHE_DIR, 'cache', rootDir),
       logsDir: resolveRuntimePath(env.ERII_LOGS_DIR, 'logs', rootDir),
       configDir: resolveRuntimePath(env.ERII_CONFIG_DIR, 'config', rootDir),
+    },
+    avatar: {
+      modelPath: resolveRuntimePath(
+        env.ERII_AVATAR_MODEL,
+        path.join('assets', 'local', 'frieren', 'model.vrm'),
+        rootDir,
+      ),
     },
     server: {
       host: env.COMPANION_HOST || '127.0.0.1',

@@ -66,6 +66,18 @@ export const useDisplayModelsStore = defineStore('display-models', () => {
 
   const displayModelsFromIndexedDBLoading = ref(false)
 
+  function registerDisplayModelPreset(model: DisplayModelURL) {
+    const presetIndex = displayModelsPresets.findIndex(preset => preset.id === model.id)
+    if (presetIndex === -1)
+      displayModelsPresets.push(model)
+    else
+      displayModelsPresets[presetIndex] = model
+
+    const loadedIndex = displayModels.value.findIndex(existing => existing.id === model.id)
+    if (loadedIndex !== -1)
+      displayModels.value[loadedIndex] = model
+  }
+
   async function loadDisplayModelsFromIndexedDB() {
     await until(displayModelsFromIndexedDBLoading).toBe(false)
 
@@ -239,6 +251,7 @@ export const useDisplayModelsStore = defineStore('display-models', () => {
     displayModelsFromIndexedDBLoading,
 
     initialize,
+    registerDisplayModelPreset,
     loadDisplayModelsFromIndexedDB,
     getDisplayModel,
     addDisplayModel,

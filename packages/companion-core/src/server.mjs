@@ -1,7 +1,12 @@
+import process from 'node:process'
+
+import { Buffer } from 'node:buffer'
 import { once } from 'node:events'
+import { createReadStream } from 'node:fs'
+import { stat } from 'node:fs/promises'
 import { createServer } from 'node:http'
-import { fileURLToPath } from 'node:url'
 import { Readable } from 'node:stream'
+import { fileURLToPath } from 'node:url'
 
 import { OpenAICompatibleChatClient } from './adapters/openai-compatible.mjs'
 import { VoiceboxClient } from './adapters/voicebox.mjs'
@@ -16,7 +21,7 @@ import { serializeSse } from './protocol.mjs'
 import { ConversationRuntime } from './runtime/conversation-runtime.mjs'
 
 const LOOPBACK_HOSTS = new Set(['127.0.0.1', 'localhost', '[::1]', '::1'])
-const CODEX_APP_ORIGIN = /^codex-app:\/\/[A-Za-z0-9._~-]*$/i
+const CODEX_APP_ORIGIN = /^codex-app:\/\/[\w.~-]*$/i
 const MAX_AVATAR_EVENT_BYTES = 64 * 1024
 
 export function originAllowed(origin) {
@@ -54,7 +59,7 @@ function corsHeaders(origin) {
     'Access-Control-Allow-Headers': 'Content-Type, Last-Event-ID, Range, X-Audio-Filename',
     'Access-Control-Expose-Headers': 'Content-Length, Content-Range, Accept-Ranges',
     'Cache-Control': 'no-store',
-    Vary: 'Origin',
+    'Vary': 'Origin',
   }
 }
 
@@ -64,6 +69,95 @@ function sendJson(response, status, body, origin) {
     'Content-Type': 'application/json; charset=utf-8',
   })
   response.end(JSON.stringify(body))
+}
+
+function parseByteRange(value, size) {
+  if (!value)
+    return undefined
+
+  const match = String(value).match(/^bytes=(\d*)-(\d*)$/)
+  if (!match)
+    return null
+
+  const [, startText, endText] = match
+  if (!startText && !endText)
+    return null
+
+  let start
+  let end
+  if (!startText) {
+    const suffixLength = Number.parseInt(endText, 10)
+    if (!Number.isFinite(suffixLength) || suffixLength <= 0)
+      return null
+    start = Math.max(0, size - suffixLength)
+    end = size - 1
+  }
+  else {
+    start = Number.parseInt(startText, 10)
+    end = endText ? Number.parseInt(endText, 10) : size - 1
+  }
+
+  if (!Number.isFinite(start) || !Number.isFinite(end) || start < 0 || start >= size || end < start)
+    return null
+
+  return {
+    start,
+    end: Math.min(end, size - 1),
+  }
+}
+
+async function streamLocalAvatarModel(request, response, origin, modelPath) {
+  let modelStat
+  try {
+    modelStat = await stat(modelPath)
+  }
+  catch (error) {
+    throw new CompanionError('Local avatar model is not installed', {
+      code: 'AVATAR_MODEL_NOT_FOUND',
+      status: 404,
+      cause: error,
+    })
+  }
+
+  if (!modelStat.isFile()) {
+    throw new CompanionError('Local avatar model is not a file', {
+      code: 'AVATAR_MODEL_NOT_FOUND',
+      status: 404,
+    })
+  }
+
+  const range = parseByteRange(request.headers.range, modelStat.size)
+  if (range === null) {
+    response.writeHead(416, {
+      ...corsHeaders(origin),
+      'Content-Range': `bytes */${modelStat.size}`,
+    })
+    response.end()
+    return
+  }
+
+  const status = range ? 206 : 200
+  const contentLength = range
+    ? range.end - range.start + 1
+    : modelStat.size
+  const headers = {
+    ...corsHeaders(origin),
+    'Accept-Ranges': 'bytes',
+    'Content-Length': contentLength,
+    'Content-Type': 'model/gltf-binary',
+  }
+  if (range)
+    headers['Content-Range'] = `bytes ${range.start}-${range.end}/${modelStat.size}`
+
+  response.writeHead(status, headers)
+  if (request.method === 'HEAD' || contentLength === 0) {
+    response.end()
+    return
+  }
+
+  const stream = createReadStream(modelPath, range || undefined)
+  stream.once('error', error => response.destroy(error))
+  stream.pipe(response)
 }
 
 async function readBody(request, maxBytes) {
@@ -105,7 +199,7 @@ async function streamTurn(response, origin, conversationId, runtime, avatarHub, 
   response.writeHead(200, {
     ...corsHeaders(origin),
     'Content-Type': 'text/event-stream; charset=utf-8',
-    Connection: 'keep-alive',
+    'Connection': 'keep-alive',
     'X-Accel-Buffering': 'no',
   })
   response.flushHeaders()
@@ -133,7 +227,7 @@ function streamAvatarEvents(response, origin, avatarHub) {
   response.writeHead(200, {
     ...corsHeaders(origin),
     'Content-Type': 'text/event-stream; charset=utf-8',
-    Connection: 'keep-alive',
+    'Connection': 'keep-alive',
     'X-Accel-Buffering': 'no',
   })
   response.flushHeaders()
@@ -271,6 +365,16 @@ export function createCompanionServer({
         return
       }
 
+      if ((request.method === 'GET' || request.method === 'HEAD') && url.pathname === '/v1/avatar/model') {
+        await streamLocalAvatarModel(
+          request,
+          response,
+          origin,
+          config.avatar.modelPath,
+        )
+        return
+      }
+
       if (request.method === 'GET' && url.pathname === '/v1/avatar/status') {
         sendJson(response, 200, {
           ok: true,
@@ -402,10 +506,16 @@ export async function startCompanionServer(config = loadConfig()) {
 const isEntrypoint = process.argv[1] && fileURLToPath(import.meta.url) === process.argv[1]
 if (isEntrypoint) {
   const config = loadConfig()
-  const server = await startCompanionServer(config)
-  console.log(`AIRI Companion Core listening at http://${config.server.host}:${config.server.port}`)
+  startCompanionServer(config)
+    .then((server) => {
+      console.info(`AIRI Companion Core listening at http://${config.server.host}:${config.server.port}`)
 
-  const shutdown = () => server.close()
-  process.once('SIGINT', shutdown)
-  process.once('SIGTERM', shutdown)
+      const shutdown = () => server.close()
+      process.once('SIGINT', shutdown)
+      process.once('SIGTERM', shutdown)
+    })
+    .catch((error) => {
+      console.error(error)
+      process.exitCode = 1
+    })
 }
