@@ -581,7 +581,13 @@ async function startAudioInteractionConsumers() {
       return
     }
 
-    if (transcriptionError.value || streamingTranscriptionUnavailable.value) {
+    if (
+      transcriptionError.value
+      || streamingTranscriptionUnavailable.value
+      || activeTranscriptionProvider.value === 'official-speech-audio-transcription'
+      || activeTranscriptionProvider.value === 'speech-noop'
+      || !activeTranscriptionProvider.value
+    ) {
       streamingTranscriptionUnavailable.value = true
       await stopStreamingTranscription(true)
       console.warn('[Main Page] Streaming transcription unavailable; using recorder-backed fallback:', transcriptionError.value)
