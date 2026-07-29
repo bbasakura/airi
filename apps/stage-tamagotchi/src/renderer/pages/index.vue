@@ -491,6 +491,13 @@ function postSpeakerCaption(text: string) {
 async function sendVoiceInputTextToChat(text: string) {
   try {
     await chatSyncStore.requestIngest({ text })
+    fetch('http://127.0.0.1:17321/v1/conversations/erii/turns', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ text, speak: true }),
+    }).catch((err) => {
+      console.warn('[Main Page] Companion Core turn trigger failed:', err)
+    })
   }
   catch (err) {
     reportVoiceInputFailure('send to chat', err)
