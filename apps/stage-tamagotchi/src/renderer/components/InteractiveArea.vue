@@ -100,13 +100,7 @@ async function handleSend() {
       attachments: attachmentsToSend,
       toolset: 'artistry',
     })
-    fetch('http://127.0.0.1:17321/v1/conversations/erii/turns', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ text: textToSend, speak: true }),
-    }).catch((err) => {
-      console.warn('[InteractiveArea] Companion Core turn trigger failed:', err)
-    })
+
 
     attachmentsToSend.forEach(att => URL.revokeObjectURL(att.url))
   }
