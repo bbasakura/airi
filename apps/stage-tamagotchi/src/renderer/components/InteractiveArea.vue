@@ -79,7 +79,7 @@ function navigateToImageJournal() {
 }
 
 async function handleSend() {
-  if (isComposing.value) {
+  if (isComposing.value || sending.value) {
     return
   }
 

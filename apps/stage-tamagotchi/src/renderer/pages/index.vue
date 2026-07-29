@@ -498,10 +498,24 @@ function postSpeakerCaption(text: string) {
 /**
  * Sends buffered voice input text to the active chat session.
  */
-async function sendVoiceInputTextToChat(text: string) {
-  try {
-    await chatSyncStore.requestIngest({ text })
+let lastSentVoiceText = ''
+let lastSentVoiceTime = 0
 
+async function sendVoiceInputTextToChat(text: string) {
+  const clean = text.trim()
+  if (!clean) return
+
+  const now = Date.now()
+  if (clean === lastSentVoiceText && (now - lastSentVoiceTime < 3000)) {
+    console.info('[Main Page] Suppressed duplicate voice input ingest:', clean)
+    return
+  }
+
+  lastSentVoiceText = clean
+  lastSentVoiceTime = now
+
+  try {
+    await chatSyncStore.requestIngest({ text: clean })
   }
   catch (err) {
     reportVoiceInputFailure('send to chat', err)
