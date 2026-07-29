@@ -1,4 +1,5 @@
 $ErrorActionPreference = 'SilentlyContinue'
+$env:PATH += ';C:\Users\kk\AppData\Roaming\npm;D:\devsoft\nodejs'
 $repoRoot = 'D:\soft\Erii'
 
 Write-Host "===================================================" -ForegroundColor Cyan
@@ -11,12 +12,12 @@ Get-Process -Name "electron" | Stop-Process -Force
 Start-Sleep -Seconds 1
 
 Write-Host "[2/3] 正在拉起 Companion 侧车后台服务..." -ForegroundColor Green
-Start-Process -FilePath "powershell.exe" -ArgumentList "-NoExit", "-Command", "Set-Location '$repoRoot'; pnpm run companion:dev" -WindowStyle Minimized
+Start-Process -FilePath "powershell.exe" -ArgumentList "-NoExit", "-Command", "`$env:PATH += ';C:\Users\kk\AppData\Roaming\npm;D:\devsoft\nodejs'; Set-Location '$repoRoot'; pnpm run companion:dev" -WindowStyle Minimized
 
 Start-Sleep -Seconds 2
 
 Write-Host "[3/3] 正在启动 AIRI 桌面前端视觉窗口..." -ForegroundColor Green
-Start-Process -FilePath "powershell.exe" -ArgumentList "-NoExit", "-Command", "Set-Location '$repoRoot'; pnpm run dev:tamagotchi"
+Start-Process -FilePath "powershell.exe" -ArgumentList "-NoExit", "-Command", "`$env:PATH += ';C:\Users\kk\AppData\Roaming\npm;D:\devsoft\nodejs'; Set-Location '$repoRoot'; pnpm run dev:tamagotchi"
 
 Write-Host "===================================================" -ForegroundColor Cyan
 Write-Host "[SUCCESS] 一键重启完成！" -ForegroundColor Green
