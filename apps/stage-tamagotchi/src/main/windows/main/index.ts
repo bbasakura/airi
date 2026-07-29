@@ -107,7 +107,7 @@ export async function setupMainWindow(params: {
   })
 
   // NOTICE: in development mode, open devtools by default
-  if (is.dev || env.MAIN_APP_DEBUG || env.APP_DEBUG) {
+  if (env.MAIN_APP_DEBUG === 'true' || env.APP_DEBUG === 'true') {
     try {
       window.webContents.openDevTools({ mode: 'detach' })
     }
