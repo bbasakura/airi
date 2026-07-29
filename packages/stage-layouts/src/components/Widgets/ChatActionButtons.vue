@@ -41,7 +41,7 @@ function handleCleanupMessages() {
       <button
         data-testid="conversation-selector-button"
         :class="[
-          'max-h-[10lh] min-h-[1lh] flex items-center justify-center rounded-md p-2 outline-none',
+          'max-h-[10lh] min-h-[1lh] flex items-center justify-center rounded-xl p-2 outline-none',
           'bg-neutral-100 text-lg text-neutral-500 transition-colors transition-transform active:scale-95',
           'hover:text-primary-500 dark:bg-neutral-800 dark:text-neutral-400 dark:hover:text-primary-400',
         ]"
@@ -54,11 +54,11 @@ function handleCleanupMessages() {
       <button
         data-testid="speech-mute-button"
         :class="[
-          'max-h-[10lh] min-h-[1lh] flex items-center justify-center rounded-md p-2 outline-none',
+          'max-h-[10lh] min-h-[1lh] flex items-center justify-center rounded-xl p-2 outline-none',
           'text-lg transition-colors transition-transform active:scale-95',
           speechMuted
             ? 'bg-primary-100 text-primary-600 dark:bg-primary-900/40 dark:text-primary-300'
-            : 'bg-neutral-100 text-neutral-500 hover:text-primary-500 dark:bg-neutral-800 dark:text-neutral-400 dark:hover:text-primary-400',
+            : 'bg-neutral-900/80 text-neutral-300 hover:text-primary-400 border border-neutral-800 backdrop-blur-md',
         ]"
         :title="speechMuted ? t('stage.speech-output.unmute') : t('stage.speech-output.mute')"
         :aria-label="speechMuted ? t('stage.speech-output.unmute') : t('stage.speech-output.mute')"
@@ -72,10 +72,10 @@ function handleCleanupMessages() {
     <ViewControls />
     <button
       class="max-h-[10lh] min-h-[1lh]"
-      bg="neutral-100 dark:neutral-800"
+      bg="neutral-900/80 dark:neutral-900/90"
       text="lg neutral-500 dark:neutral-400"
       hover:text="red-500 dark:red-400"
-      flex items-center justify-center rounded-md p-2 outline-none
+      flex items-center justify-center rounded-xl p-2 outline-none
       transition-colors transition-transform active:scale-95
       @click="handleCleanupMessages"
     >
@@ -84,9 +84,9 @@ function handleCleanupMessages() {
 
     <button
       class="max-h-[10lh] min-h-[1lh]"
-      bg="neutral-100 dark:neutral-800"
+      bg="neutral-900/80 dark:neutral-900/90"
       text="lg neutral-500 dark:neutral-400"
-      flex items-center justify-center rounded-md p-2 outline-none
+      flex items-center justify-center rounded-xl p-2 outline-none
       transition-colors transition-transform active:scale-95
       @click="() => toggleDark()"
     >
@@ -97,9 +97,9 @@ function handleCleanupMessages() {
     </button>
     <button
       class="max-h-[10lh] min-h-[1lh]"
-      bg="neutral-100 dark:neutral-800"
+      bg="neutral-900/80 dark:neutral-900/90"
       text="lg neutral-500 dark:neutral-400"
-      flex items-center justify-center rounded-md p-2 outline-none
+      flex items-center justify-center rounded-xl p-2 outline-none
       transition-colors transition-transform active:scale-95
       title="Background"
       @click="backgroundDialogOpen = true"
