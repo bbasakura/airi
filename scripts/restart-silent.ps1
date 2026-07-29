@@ -2,10 +2,10 @@ $ErrorActionPreference = 'SilentlyContinue'
 $env:PATH += ';C:\Users\kk\AppData\Roaming\npm;D:\devsoft\nodejs'
 $repoRoot = 'D:\soft\Erii'
 
-# Stop old Electron windows
+# 1. Stop old Electron app instances
 Get-Process -Name "electron" | Stop-Process -Force -ErrorAction SilentlyContinue
 
-# Free port 17321 to prevent EADDRINUSE
+# 2. Free port 17321 (Companion Core)
 $conns = Get-NetTCPConnection -LocalPort 17321 -ErrorAction SilentlyContinue
 foreach ($c in $conns) {
     if ($c.OwningProcess) {
@@ -15,14 +15,13 @@ foreach ($c in $conns) {
 
 Start-Sleep -Seconds 1
 
-# Launch Companion Core completely hidden
+# 3. Launch Companion Core silently in background
 Start-Process -FilePath "powershell.exe" `
     -ArgumentList "-NoProfile -WindowStyle Hidden -Command `$env:PATH += ';C:\Users\kk\AppData\Roaming\npm;D:\devsoft\nodejs'; Set-Location '$repoRoot'; pnpm run companion:dev" `
     -WindowStyle Hidden
 
 Start-Sleep -Seconds 2
 
-# Launch Desktop UI completely hidden
+# 4. Launch Desktop Electron UI window
 Start-Process -FilePath "powershell.exe" `
-    -ArgumentList "-NoProfile -WindowStyle Hidden -Command `$env:PATH += ';C:\Users\kk\AppData\Roaming\npm;D:\devsoft\nodejs'; Set-Location '$repoRoot'; pnpm run dev:tamagotchi" `
-    -WindowStyle Hidden
+    -ArgumentList "-NoProfile -WindowStyle Hidden -Command `$env:PATH += ';C:\Users\kk\AppData\Roaming\npm;D:\devsoft\nodejs'; Set-Location '$repoRoot'; pnpm run dev:tamagotchi"
