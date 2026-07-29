@@ -29,7 +29,8 @@ export function connectLocalCompanionEvents({
   let activeSource: EventSourceLike | undefined
   let retryTimer: ReturnType<typeof setTimeout> | undefined
   let disposed = false
-  let activeAudio: HTMLAudioElement | undefined
+  let activeAudioContext: AudioContext | undefined
+  let activeAudioSource: AudioBufferSourceNode | undefined
 
   function scheduleReconnect() {
     if (disposed || retryTimer)
@@ -77,12 +78,31 @@ export function connectLocalCompanionEvents({
         try {
           const parsed = JSON.parse(event.data)
           if (parsed?.type === 'audio-play' && typeof parsed.audioPath === 'string') {
-            activeAudio?.pause()
-            const audio = new Audio(`${baseUrl.replace(/\/+$/, '')}${parsed.audioPath}`)
-            activeAudio = audio
-            audio.play().catch((error) => {
-              console.warn('[CompanionAvatar] Audio play failed:', error)
-            })
+            try {
+              activeAudioSource?.stop()
+              activeAudioSource?.disconnect()
+            }
+            catch {}
+            activeAudioSource = undefined
+
+            const playUrl = `${baseUrl.replace(/\/+$/, '')}${parsed.audioPath}`
+            fetch(playUrl)
+              .then(res => res.arrayBuffer())
+              .then(async (arrayBuf) => {
+                if (!activeAudioContext)
+                  activeAudioContext = new AudioContext()
+                if (activeAudioContext.state === 'suspended')
+                  await activeAudioContext.resume()
+                const audioBuffer = await activeAudioContext.decodeAudioData(arrayBuf)
+                const source = activeAudioContext.createBufferSource()
+                source.buffer = audioBuffer
+                source.connect(activeAudioContext.destination)
+                activeAudioSource = source
+                source.start(0)
+              })
+              .catch((error) => {
+                console.warn('[CompanionAvatar] WebAudio play failed:', error)
+              })
           }
           onEvent(parsed)
         }
