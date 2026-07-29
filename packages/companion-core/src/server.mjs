@@ -5,9 +5,11 @@ import { once } from 'node:events'
 import { createReadStream } from 'node:fs'
 import { stat } from 'node:fs/promises'
 import { createServer } from 'node:http'
+import path from 'node:path'
 import { Readable } from 'node:stream'
 import { fileURLToPath } from 'node:url'
 
+import { EdgeTTSClient } from './adapters/edge-tts.mjs'
 import { OpenAICompatibleChatClient } from './adapters/openai-compatible.mjs'
 import { VoiceboxClient } from './adapters/voicebox.mjs'
 import {
@@ -274,9 +276,14 @@ function createDefaultDependencies(config, fetchImpl) {
     ...config.voicebox,
     fetchImpl,
   })
+  const edgeTts = new EdgeTTSClient({
+    voice: config.tts.edgeVoice,
+    cacheDir: config.runtime.cacheDir,
+  })
+  const ttsClient = config.tts.engine === 'voicebox' ? voicebox : edgeTts
   const runtime = new ConversationRuntime({
     chat,
-    voicebox,
+    voicebox: ttsClient,
     systemPrompt: config.conversation.systemPrompt,
     maxHistoryMessages: config.conversation.maxHistoryMessages,
     speechEnabled: config.conversation.speechEnabled,
@@ -284,6 +291,7 @@ function createDefaultDependencies(config, fetchImpl) {
   return {
     chat,
     voicebox,
+    edgeTts,
     runtime,
     avatarHub: new AvatarEventHub(),
   }
@@ -407,8 +415,15 @@ export function createCompanionServer({
 
       const audioMatch = url.pathname.match(/^\/v1\/audio\/([^/]+)$/)
       if (request.method === 'GET' && audioMatch) {
+        const requestedFile = decodeURIComponent(audioMatch[1])
+        const localPath = path.resolve(config.runtime.cacheDir, requestedFile)
+        if (localPath.startsWith(config.runtime.cacheDir) && (await stat(localPath).catch(() => null))?.isFile()) {
+          await streamLocalAvatarModel(request, response, origin, localPath)
+          return
+        }
+
         const upstream = await dependencies.voicebox.fetchAudio(
-          decodeURIComponent(audioMatch[1]),
+          requestedFile,
           { range: request.headers.range },
         )
         if (!upstream.ok && upstream.status !== 206)

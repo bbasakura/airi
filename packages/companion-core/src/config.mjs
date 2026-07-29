@@ -87,6 +87,10 @@ export function loadConfig(env = process.env) {
         max: 600,
       }),
     },
+    tts: {
+      engine: String(env.ERII_TTS_ENGINE ?? 'edge-tts').trim().toLowerCase(),
+      edgeVoice: String(env.EDGE_TTS_VOICE ?? 'zh-CN-XiaoxiaoNeural').trim(),
+    },
     conversation: {
       systemPrompt: env.COMPANION_SYSTEM_PROMPT || DEFAULT_SYSTEM_PROMPT,
       maxHistoryMessages: parseInteger(env.COMPANION_MAX_HISTORY_MESSAGES, 20, {
