@@ -255,7 +255,7 @@ function conversationRoute(pathname) {
 
 async function healthResult(client) {
   try {
-    return await client.health(AbortSignal.timeout(3000))
+    return await client.health(AbortSignal.timeout(8000))
   }
   catch (error) {
     return {
