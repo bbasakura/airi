@@ -36,6 +36,12 @@ lerna-debug.log*
 *.ogg
 *.mp3
 
+# Local-only character media with non-redistributable licenses
+assets/local/**/*.vrm
+assets/local/**/*.vrma
+assets/local/**/*.glb
+assets/local/**/*.gltf
+
 # Credentials
 cert*/
 *.pem

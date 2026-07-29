@@ -1,0 +1,20 @@
+{
+  "id": "vroid-hub-8080014502732329344",
+  "displayName": "Frieren",
+  "creator": "Jshan",
+  "creatorUrl": "https://hub.vroid.com/en/users/47161305",
+  "sourceUrl": "https://hub.vroid.com/en/characters/8963977019054501344/models/8080014502732329344",
+  "format": "VRM 0.0",
+  "localFile": "model.vrm",
+  "license": {
+    "avatarUse": true,
+    "corporateUse": false,
+    "individualCommercialUse": false,
+    "redistribution": false,
+    "alterations": false,
+    "attributionRequired": true
+  },
+  "distributionAllowed": false,
+  "reviewedAt": "2026-07-29",
+  "installStatus": "awaiting-vroid-hub-download"
+}
