@@ -2485,7 +2485,8 @@ export const useProvidersStore = defineStore('providers', () => {
       result[key] = state.isConfigured
     }
 
-    result['openai-compatible-audio-speech'] = true
+    result['edge-tts'] = true
+      result['openai-compatible-audio-speech'] = true
     result['openai-compatible-audio-transcription'] = true
     return result
   })
