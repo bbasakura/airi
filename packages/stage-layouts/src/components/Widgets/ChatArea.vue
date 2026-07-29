@@ -183,7 +183,7 @@ watch(sendMode, () => {
       :class="[
         'relative',
         'w-full',
-        'bg-primary-200/20 dark:bg-primary-400/20',
+        'bg-neutral-900/40 dark:bg-neutral-950/60 border-t border-neutral-800/40',
       ]"
     >
       <BasicTextarea

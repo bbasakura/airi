@@ -76,7 +76,7 @@ function getToolCallRenderer(slice: ChatSlices) {
 const showLoader = computed(() => props.showPlaceholder && resolvedSlices.value.length === 0)
 const containerClass = computed(() => props.variant === 'mobile' ? 'mr-0' : 'mr-12')
 const boxClasses = computed(() => [
-  props.variant === 'mobile' ? 'px-2 py-2 text-sm bg-primary-50/90 dark:bg-primary-950/90' : 'px-3 py-3 bg-primary-50/80 dark:bg-primary-950/80',
+  props.variant === 'mobile' ? 'px-3 py-2 text-sm bg-neutral-900/80 border border-neutral-800/80 backdrop-blur-md rounded-2xl' : 'px-4 py-3 bg-neutral-900/85 border border-neutral-800/80 backdrop-blur-md rounded-2xl shadow-xl',
 ])
 const copyText = computed(() => getChatHistoryItemCopyText(props.message as ChatHistoryItem))
 </script>
