@@ -1,3 +1,10 @@
+process.stdout?.on?.('error', (err) => { if (err?.code === 'EPIPE') return })
+process.stderr?.on?.('error', (err) => { if (err?.code === 'EPIPE') return })
+process.on('uncaughtException', (err) => {
+  if (err?.code === 'EPIPE') return
+  console.error('[Companion Core Exception]:', err)
+})
+
 import process from 'node:process'
 
 import { Buffer } from 'node:buffer'

@@ -1,3 +1,19 @@
+// Suppress EPIPE errors on stdout/stderr when parent terminal pipe is closed
+if (process.stdout && typeof process.stdout.on === 'function') {
+  process.stdout.on('error', (err: any) => {
+    if (err && err.code === 'EPIPE') return
+  })
+}
+if (process.stderr && typeof process.stderr.on === 'function') {
+  process.stderr.on('error', (err: any) => {
+    if (err && err.code === 'EPIPE') return
+  })
+}
+process.on('uncaughtException', (err: any) => {
+  if (err && err.code === 'EPIPE') return
+  console.error('[Main Process Exception]:', err)
+})
+
 import type { BrowserWindow } from 'electron'
 
 import type { FileLoggerHandle } from './app/file-logger'
