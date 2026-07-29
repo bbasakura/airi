@@ -1,3 +1,19 @@
+export function cleanTextForTts(text) {
+  if (!text) return ''
+  return String(text)
+    .replace(/```[\s\S]*?```/g, '')
+    .replace(/`([^`]+)`/g, '$1')
+    .replace(/\[([^\]]+)\]\([^)]+\)/g, '$1')
+    .replace(/^#+\s+/gm, '')
+    .replace(/[*_~]{1,3}/g, '')
+    .replace(/^>\s+/gm, '')
+    .replace(/^[-*+]\s+/gm, '')
+    .replace(/[\r\n]+/g, '，')
+    .replace(/[\u{1F600}-\u{1F64F}\u{1F300}-\u{1F5FF}\u{1F680}-\u{1F6FF}\u{2600}-\u{26FF}\u{2700}-\u{27BF}]/gu, '')
+    .replace(/["'\\\\]/g, '')
+    .trim()
+}
+
 import path from 'node:path'
 import process from 'node:process'
 
