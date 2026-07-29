@@ -40,7 +40,7 @@ const settings = computed(() => {
 <template>
   <div flex="~ col gap-4" font-normal>
     <div />
-    <div flex="~ col gap-4" pb-12>
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-4 pb-12">
       <IconItem
         v-for="(setting, index) in settings"
         :key="setting.to"

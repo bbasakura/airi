@@ -67,7 +67,7 @@ const routeHeaderMetadata = computed(() => {
 </script>
 
 <template>
-  <div h-full w-full bg="$bg-color" flex="~ col">
+  <div h-full w-full bg="neutral-950/90 dark:neutral-950/95" backdrop-blur-2xl flex="~ col">
     <WindowTitleBar :title="routeHeaderMetadata?.title ?? ''" icon="i-solar:settings-bold" />
     <div
       :style="{

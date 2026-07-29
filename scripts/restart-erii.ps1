@@ -6,8 +6,14 @@ Write-Host "===================================================" -ForegroundColo
 Write-Host "            Erii AI Companion 一键重启              " -ForegroundColor Cyan
 Write-Host "===================================================" -ForegroundColor Cyan
 
-Write-Host "[1/3] 正在停止旧的 Electron 桌面客户端..." -ForegroundColor Yellow
-Get-Process -Name "electron" | Stop-Process -Force
+Write-Host "[1/3] 正在停止旧进程并释放 17321 端口..." -ForegroundColor Yellow
+Get-Process -Name "electron" | Stop-Process -Force -ErrorAction SilentlyContinue
+$conns = Get-NetTCPConnection -LocalPort 17321 -ErrorAction SilentlyContinue
+foreach ($c in $conns) {
+    if ($c.OwningProcess) {
+        Stop-Process -Id $c.OwningProcess -Force -ErrorAction SilentlyContinue
+    }
+}
 
 Start-Sleep -Seconds 1
 
