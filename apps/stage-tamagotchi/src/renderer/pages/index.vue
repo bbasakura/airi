@@ -646,7 +646,7 @@ watch(nowSpeaking, async (speaking) => {
       await voiceInputInteractionLifecycle.stop({ flushTranscript: false })
     }
     catch (error) {
-      reportVoiceInputFailure('pause while assistant is speaking', error)
+      console.warn('[Main Page] Failed to pause voice input while assistant is speaking:', error)
     }
     return
   }
