@@ -1113,6 +1113,27 @@ export const useHearingSpeechInputPipeline = defineStore('modules:hearing:speech
     }
   }
 
+  async function transcribeWithLocalVoicebox(recording: Blob): Promise<string | undefined> {
+    try {
+      const form = new FormData()
+      form.append('file', recording, 'recording.wav')
+      form.append('model', 'base')
+      const response = await fetch('http://127.0.0.1:17493/transcribe', {
+        method: 'POST',
+        body: form,
+      })
+      if (!response.ok)
+        return undefined
+      const data = await response.json()
+      const text = String(data?.text || '').trim()
+      return text || undefined
+    }
+    catch (err) {
+      console.warn('[Hearing Pipeline] Local Voicebox fallback failed:', err)
+      return undefined
+    }
+  }
+
   async function transcribeForRecording(recording: Blob | null | undefined) {
     error.value = undefined
 
@@ -1135,6 +1156,12 @@ export const useHearingSpeechInputPipeline = defineStore('modules:hearing:speech
       const providerId = activeTranscriptionProvider.value
       const providerError = resolveActiveTranscriptionProviderError(providerId)
       if (providerError) {
+        const localText = await transcribeWithLocalVoicebox(recording)
+        if (localText) {
+          console.info('[Hearing Pipeline] Successfully transcribed via local Voicebox fallback:', localText)
+          error.value = undefined
+          return localText
+        }
         error.value = providerError
         console.error('[Hearing Pipeline]', providerError)
         return
@@ -1175,6 +1202,12 @@ export const useHearingSpeechInputPipeline = defineStore('modules:hearing:speech
       return text
     }
     catch (err) {
+      const localText = await transcribeWithLocalVoicebox(recording)
+      if (localText) {
+        console.info('[Hearing Pipeline] Successfully transcribed via local Voicebox fallback:', localText)
+        error.value = undefined
+        return localText
+      }
       error.value = errorMessage(err)
       console.error('Error generating transcription:', error.value)
     }
