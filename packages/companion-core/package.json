@@ -1,0 +1,14 @@
+{
+  "name": "@airi-companion/core",
+  "type": "module",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Provider-independent runtime and local sidecar for AIRI Companion",
+  "scripts": {
+    "dev": "node --env-file-if-exists=../../.env src/server.mjs",
+    "test": "node --test test/*.test.mjs"
+  },
+  "engines": {
+    "node": ">=24.0.0"
+  }
+}

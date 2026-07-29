@@ -12,6 +12,8 @@
   },
   "license": "MIT",
   "scripts": {
+    "companion:dev": "node --env-file-if-exists=.env packages/companion-core/src/server.mjs",
+    "companion:test": "node --test packages/companion-core/test/*.test.mjs",
     "postinstall": "pnpm exec simple-git-hooks && pnpm run build:packages",
     "dev": "pnpm -r -F @proj-airi/stage-web dev",
     "dev:docs": "pnpm -rF @proj-airi/docs run dev",
