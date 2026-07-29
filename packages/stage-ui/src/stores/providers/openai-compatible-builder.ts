@@ -97,7 +97,7 @@ export function buildOpenAICompatibleProvider(
     listModels: async (config: Record<string, unknown>) => {
       // Safer casting of apiKey/baseUrl (prevents .trim() crash if not a string)
       const apiKey = normalizeString(config.apiKey)
-      const baseUrl = normalizeBaseUrl(config.baseUrl)
+      const baseUrl = normalizeBaseUrl(config.baseUrl) || normalizeBaseUrl(defaultBaseUrl) || 'https://api.openai.com/v1/'
 
       // If not configured yet, avoid remote calls and return empty
       if (!apiKey || !baseUrl) {
@@ -289,7 +289,7 @@ export function buildOpenAICompatibleProvider(
     }),
     createProvider: async (config: { apiKey: string, baseUrl: string }) => {
       const apiKey = normalizeString(config.apiKey)
-      const baseUrl = normalizeBaseUrl(config.baseUrl)
+      const baseUrl = normalizeBaseUrl(config.baseUrl) || normalizeBaseUrl(defaultBaseUrl) || 'https://api.openai.com/v1/'
       const provider = await creator(apiKey, baseUrl)
       if (resolvedCategory === 'transcription')
         return withTranscriptionExtraOptions(provider)

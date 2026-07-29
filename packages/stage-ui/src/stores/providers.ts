@@ -682,6 +682,7 @@ export const useProvidersStore = defineStore('providers', () => {
     }),
     'openai-compatible-audio-speech': buildOpenAICompatibleProvider({
       id: 'openai-compatible-audio-speech',
+      defaultBaseUrl: 'https://api.openai.com/v1/',
       name: 'OpenAI Compatible',
       nameKey: 'settings.pages.providers.provider.openai-compatible.title',
       descriptionKey: 'settings.pages.providers.provider.openai-compatible.description',
@@ -818,6 +819,7 @@ export const useProvidersStore = defineStore('providers', () => {
     }),
     'openai-compatible-audio-transcription': buildOpenAICompatibleProvider({
       id: 'openai-compatible-audio-transcription',
+      defaultBaseUrl: 'https://api.openai.com/v1/',
       name: 'OpenAI Compatible',
       nameKey: 'settings.pages.providers.provider.openai-compatible.title',
       descriptionKey: 'settings.pages.providers.provider.openai-compatible.description',
