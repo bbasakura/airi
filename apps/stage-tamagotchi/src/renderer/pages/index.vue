@@ -346,10 +346,20 @@ const { post: postCaption } = useBroadcastChannel<CaptionChannelEvent, CaptionCh
  * Reports a voice input pipeline failure to both the console and visible app UI.
  */
 function reportVoiceInputFailure(action: string, error: unknown) {
-  const reason = errorMessageFrom(error)
-  const message = reason
-    ? `Voice input failed to ${action}: ${reason}`
-    : `Voice input failed to ${action}.`
+  const reason = errorMessageFrom(error) || ''
+  const isTransientNoiseError = !reason
+    || reason.includes('Assertion failed')
+    || reason.includes('empty')
+    || reason.includes('No recording')
+    || reason.includes('EMPTY_TRANSCRIPT')
+    || reason.includes('No transcription')
+
+  if (isTransientNoiseError) {
+    console.info(`[Main Page] Suppressed transient voice input toast for ${action}:`, reason || error)
+    return
+  }
+
+  const message = `Voice input failed to ${action}: ${reason}`
   console.error(`[Main Page] ${message}`, error)
   toast.error(message)
 }
