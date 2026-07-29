@@ -380,6 +380,90 @@ export const useProvidersStore = defineStore('providers', () => {
         }),
       },
     },
+    'edge-tts': {
+      id: 'edge-tts',
+      category: 'speech',
+      tasks: ['text-to-speech', 'tts'],
+      name: 'Edge TTS (微软高保真免费音色)',
+      nameKey: 'Edge TTS (微软高保真免费音色)',
+      description: 'Microsoft Edge Neural Voices (晓晓 / 云希 / 云健 / 晓伊)',
+      descriptionKey: 'Microsoft Edge Neural Voices (晓晓 / 云希 / 云健 / 晓伊)',
+      icon: 'i-lobe-icons:microsoft',
+      requiresCredentials: false,
+      defaultOptions: () => ({
+        baseUrl: 'http://127.0.0.1:17321/v1/',
+      }),
+      createProvider: async () => ({
+        speech: () => ({
+          baseURL: 'http://127.0.0.1:17321/v1/',
+          model: 'edge-tts',
+        }),
+      }),
+      capabilities: {
+        listModels: async () => [
+          {
+            id: 'edge-tts',
+            name: 'Edge TTS Neural',
+            provider: 'edge-tts',
+            description: 'Microsoft Edge High-Fidelity Speech Engine',
+            contextLength: 0,
+            deprecated: false,
+          },
+        ],
+        listVoices: async () => [
+          {
+            id: 'zh-CN-XiaoxiaoNeural',
+            name: 'zh-CN-XiaoxiaoNeural (晓晓 - 温柔女声 ⭐⭐⭐⭐⭐)',
+            provider: 'edge-tts',
+            languages: [{ code: 'zh', title: 'Chinese' }],
+            gender: 'female',
+          },
+          {
+            id: 'zh-CN-YunxiNeural',
+            name: 'zh-CN-YunxiNeural (云希 - 阳光男声)',
+            provider: 'edge-tts',
+            languages: [{ code: 'zh', title: 'Chinese' }],
+            gender: 'male',
+          },
+          {
+            id: 'zh-CN-YunjianNeural',
+            name: 'zh-CN-YunjianNeural (云健 - 沉稳男声)',
+            provider: 'edge-tts',
+            languages: [{ code: 'zh', title: 'Chinese' }],
+            gender: 'male',
+          },
+          {
+            id: 'zh-CN-XiaoyiNeural',
+            name: 'zh-CN-XiaoyiNeural (晓伊 - 活泼女声)',
+            provider: 'edge-tts',
+            languages: [{ code: 'zh', title: 'Chinese' }],
+            gender: 'female',
+          },
+          {
+            id: 'en-US-AvaNeural',
+            name: 'en-US-AvaNeural (Ava - English Female)',
+            provider: 'edge-tts',
+            languages: [{ code: 'en', title: 'English' }],
+            gender: 'female',
+          },
+          {
+            id: 'ja-JP-NanamiNeural',
+            name: 'ja-JP-NanamiNeural (Nanami - Japanese Female)',
+            provider: 'edge-tts',
+            languages: [{ code: 'ja', title: 'Japanese' }],
+            gender: 'female',
+          },
+        ],
+      },
+      validators: {
+        chatPingCheckAvailable: false,
+        validateProviderConfig: () => ({
+          errors: [],
+          reason: '',
+          valid: true,
+        }),
+      },
+    },
     'app-local-audio-speech': buildOpenAICompatibleProvider({
       id: 'app-local-audio-speech',
       name: 'App (Local)',
