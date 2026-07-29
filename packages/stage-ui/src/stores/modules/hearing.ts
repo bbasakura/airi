@@ -1113,6 +1113,8 @@ export const useHearingSpeechInputPipeline = defineStore('modules:hearing:speech
     }
   }
 
+  const HALLUCINATIONS = new Set(['you', 'you.', 'you!', 'you?', 'thank you', 'thank you.', 'thanks', 'thanks.', 'bye', 'bye.'])
+
   async function transcribeWithLocalVoicebox(recording: Blob): Promise<string | undefined> {
     try {
       const form = new FormData()
@@ -1126,7 +1128,11 @@ export const useHearingSpeechInputPipeline = defineStore('modules:hearing:speech
         return undefined
       const data = await response.json()
       const text = String(data?.text || '').trim()
-      return text || undefined
+      if (!text || HALLUCINATIONS.has(text.toLowerCase())) {
+        console.info('[Hearing Pipeline] Filtered Whisper silence hallucination:', text)
+        return undefined
+      }
+      return text
     }
     catch (err) {
       console.warn('[Hearing Pipeline] Local Voicebox fallback failed:', err)
