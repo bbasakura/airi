@@ -86,7 +86,7 @@ const providerSourceMetadataById = {
   'openai-audio-transcription': paidCloud,
   'openai-compatible': false,
   'openai-compatible-audio-speech': false,
-  'openai-compatible-audio-transcription': false,
+  'openai-compatible-audio-transcription': freeLocal,
   'openpaths': paidCloud,
   'openrouter-ai': paidCloud,
   'openrouter-audio-speech': paidCloud,
