@@ -337,7 +337,7 @@ function syncEdgeTtsSettings() {
   }
 }
 
-function syncEdgeTtsSettings(); syncOpenAICompatibleSettings() {
+function syncOpenAICompatibleSettings() {
   if (activeSpeechProvider.value !== 'openai-compatible-audio-speech')
     return
 
