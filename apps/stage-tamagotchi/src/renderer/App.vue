@@ -9,6 +9,7 @@ import { useAuthProviderSync } from '@proj-airi/stage-ui/composables/use-auth-pr
 import { useSharedAnalyticsStore } from '@proj-airi/stage-ui/stores/analytics'
 import { useCharacterOrchestratorStore } from '@proj-airi/stage-ui/stores/character'
 import { useChatSessionStore } from '@proj-airi/stage-ui/stores/chat/session-store'
+import { useCompanionAvatarStore } from '@proj-airi/stage-ui/stores/companion-avatar'
 import { usePluginHostInspectorStore } from '@proj-airi/stage-ui/stores/devtools/plugin-host-debug'
 import { useDisplayModelsStore } from '@proj-airi/stage-ui/stores/display-models'
 import { useModsServerChannelStore } from '@proj-airi/stage-ui/stores/mods/api/channel-server'
@@ -52,7 +53,11 @@ import {
 import { electronPluginToolsChanged } from '../shared/eventa/plugin/tools'
 import { initializeElectronAuthCallbackBridge } from './bridges/electron-auth-callback'
 import { initializeStageThreeRuntimeTraceBridge } from './bridges/stage-three-runtime-trace'
-import { initializeLocalCompanionAvatar } from './composables/local-companion-avatar'
+import {
+  ERII_LOCAL_AVATAR_MODEL_ID,
+  initializeLocalCompanionAvatar,
+} from './composables/local-companion-avatar'
+import { connectLocalCompanionEvents } from './composables/local-companion-events'
 import { useLanguage } from './composables/use-language'
 import { createChatSyncWindowLifecycle, resolveInitialChatSyncRoutePath } from './stores/chat-sync-lifecycle'
 import { useTamagotchiMcpToolsStore } from './stores/mcp-tools'
@@ -78,6 +83,7 @@ if (!isSpotlightWindowRoute)
   useAuthProviderSync()
 
 function createFullStageRuntime() {
+  const companionAvatarStore = useCompanionAvatarStore()
   const contextBridgeStore = useContextBridgeStore()
   const displayModelsStore = useDisplayModelsStore()
   const serverChannelSettingsStore = useServerChannelSettingsStore()
@@ -108,6 +114,8 @@ function createFullStageRuntime() {
   const isAuxiliaryChatRoute = initialWindowRoutePath === '/chat'
   const isGodotStageRoute = () => route.path === '/' || route.path.startsWith('/settings')
   const isWidgetsWindowRoute = () => route.path === '/widgets'
+  const companionBaseUrl = import.meta.env.VITE_COMPANION_BASE_URL || 'http://127.0.0.1:17321'
+  let disposeLocalCompanionEvents: (() => void) | undefined
 
   function syncGodotStageRenderer(state: { state: 'stopped' | 'starting' | 'running' | 'stopping' | 'error' }) {
     if (state.state === 'running') {
@@ -200,12 +208,18 @@ function createFullStageRuntime() {
       analyticsStore.initialize()
       await displayModelsStore.initialize()
       await initializeLocalCompanionAvatar({
-        baseUrl: import.meta.env.VITE_COMPANION_BASE_URL || 'http://127.0.0.1:17321',
+        baseUrl: companionBaseUrl,
         registerPreset: model => displayModelsStore.registerDisplayModelPreset(model),
         selectModel: (id) => {
           settingsStore.stageModelSelected = id
         },
         storage: localStorage,
+      })
+      companionAvatarStore.configureTarget(ERII_LOCAL_AVATAR_MODEL_ID)
+      disposeLocalCompanionEvents = connectLocalCompanionEvents({
+        baseUrl: companionBaseUrl,
+        onConnectionChange: connected => companionAvatarStore.setConnected(connected),
+        onEvent: event => companionAvatarStore.applyEvent(event),
       })
       cardStore.initialize()
 
@@ -256,6 +270,8 @@ function createFullStageRuntime() {
     dispose() {
       if (!isAuxiliaryChatRoute)
         contextBridgeStore.dispose()
+      disposeLocalCompanionEvents?.()
+      disposeLocalCompanionEvents = undefined
       mcpToolsStore.dispose()
       pluginToolsStore.dispose()
     },

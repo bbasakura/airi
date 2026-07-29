@@ -44,6 +44,7 @@ import { getSpeechBusContext, speechOutputGetPlaybackState } from '../../service
 import { useAudioContext, useSpeakingStore } from '../../stores/audio'
 import { useBackgroundStore } from '../../stores/background'
 import { useChatOrchestratorStore } from '../../stores/chat'
+import { useCompanionAvatarStore } from '../../stores/companion-avatar'
 import { useLlmStreamingControlStore } from '../../stores/llm-streaming-control'
 import { useAiriCardStore } from '../../stores/modules'
 import { useSpeechStore } from '../../stores/modules/speech'
@@ -95,6 +96,16 @@ const {
   spineRenderScale,
 } = storeToRefs(settingsStore)
 const { mouthOpenSize, nowSpeaking } = storeToRefs(useSpeakingStore())
+const companionAvatarStore = useCompanionAvatarStore()
+const {
+  connected: companionConnected,
+  targetModelId: companionTargetModelId,
+  phase: companionPhase,
+  activity: companionActivity,
+  audioLevel: companionAudioLevel,
+  animation: companionAnimation,
+  animationSequence: companionAnimationSequence,
+} = storeToRefs(companionAvatarStore)
 const disposePlaybackStateHandler = defineInvokeHandler(
   getSpeechBusContext(),
   speechOutputGetPlaybackState,
@@ -123,6 +134,93 @@ function onVRMInteract(target: VrmInteractionTarget) {
   lastVrmInteractionAt.set(target, now)
   vrmViewerRef.value?.setExpression(getVrmInteractionExpression(target), 1)
 }
+
+const companionTargetSelected = computed(() =>
+  companionTargetModelId.value != null
+  && companionTargetModelId.value === stageModelSelected.value,
+)
+const companionExternalAudioLevel = computed(() =>
+  companionTargetSelected.value
+  && companionConnected.value
+  && companionActivity.value === 'speaking'
+    ? companionAudioLevel.value
+    : undefined,
+)
+const companionStateExpressions = {
+  idle: { expression: 'neutral', intensity: 1 },
+  listening: { expression: 'surprised', intensity: 0.18 },
+  thinking: { expression: 'relaxed', intensity: 0.45 },
+  speaking: { expression: 'happy', intensity: 0.2 },
+} as const
+const companionAnimationExpressions = {
+  IDLE: { expression: 'neutral', intensity: 1, durationMs: 800 },
+  GREETING: { expression: 'happy', intensity: 0.8, durationMs: 2200 },
+  TALK: { expression: 'relaxed', intensity: 0.4, durationMs: 1500 },
+  HAPPY: { expression: 'happy', intensity: 1, durationMs: 2600 },
+  FINGER_GUN: { expression: 'surprised', intensity: 0.85, durationMs: 2200 },
+  DANCE: { expression: 'happy', intensity: 1, durationMs: 3200 },
+} as const
+let companionAnimationResetTimer: ReturnType<typeof setTimeout> | undefined
+
+function clearCompanionAnimationReset() {
+  if (!companionAnimationResetTimer)
+    return
+  clearTimeout(companionAnimationResetTimer)
+  companionAnimationResetTimer = undefined
+}
+
+function applyCompanionStateExpression() {
+  if (
+    !companionTargetSelected.value
+    || stageModelRenderer.value !== 'vrm'
+    || componentState.value !== 'mounted'
+  ) {
+    return
+  }
+
+  clearCompanionAnimationReset()
+  const reaction = companionConnected.value
+    ? companionStateExpressions[companionActivity.value]
+    : companionStateExpressions.idle
+  vrmViewerRef.value?.setExpression(reaction.expression, reaction.intensity, 0)
+}
+
+watch(
+  [
+    companionTargetSelected,
+    companionConnected,
+    companionPhase,
+    companionActivity,
+    stageModelRenderer,
+    componentState,
+  ],
+  applyCompanionStateExpression,
+  { flush: 'post', immediate: true },
+)
+
+watch(
+  [companionAnimationSequence, companionTargetSelected, stageModelRenderer, componentState],
+  ([sequence]) => {
+    if (
+      !sequence
+      || !companionAnimation.value
+      || !companionTargetSelected.value
+      || stageModelRenderer.value !== 'vrm'
+      || componentState.value !== 'mounted'
+    ) {
+      return
+    }
+
+    clearCompanionAnimationReset()
+    const reaction = companionAnimationExpressions[companionAnimation.value]
+    vrmViewerRef.value?.setExpression(reaction.expression, reaction.intensity, 0)
+    companionAnimationResetTimer = setTimeout(() => {
+      companionAnimationResetTimer = undefined
+      applyCompanionStateExpression()
+    }, reaction.durationMs)
+  },
+  { flush: 'post' },
+)
 
 const { onBeforeMessageComposed, onBeforeSend, onTokenLiteral, onTokenSpecial, onStreamEnd, onAssistantResponseEnd } = useChatOrchestratorStore()
 const chatHookCleanups: Array<() => void> = []
@@ -1020,6 +1118,7 @@ async function captureFrame() {
 
 onUnmounted(() => {
   disposePlaybackStateHandler()
+  clearCompanionAnimationReset()
   resetLive2dLipSync()
   chatHookCleanups.forEach(dispose => dispose?.())
   viewUpdateCleanups.forEach(dispose => dispose?.())
@@ -1088,6 +1187,7 @@ defineExpose({
         :show-axes="stageViewControlsEnabled"
         :enable-orbit-controls="props.enableOrbitControls"
         :current-audio-source="currentAudioSource"
+        :external-audio-level="companionExternalAudioLevel"
         @error="console.error"
         @vrm-interact="onVRMInteract"
       />

@@ -109,6 +109,7 @@ import {
 */
 const props = withDefaults(defineProps<{
   currentAudioSource?: AudioBufferSourceNode
+  externalAudioLevel?: number
   cursorPosition?: { x: number, y: number }
   lastCommittedModelSrc?: string
   modelSrc?: string
@@ -149,6 +150,7 @@ const emit = defineEmits<{
 
 const {
   currentAudioSource,
+  externalAudioLevel,
   lastCommittedModelSrc,
   modelSrc,
   idleAnimation,
@@ -195,7 +197,7 @@ type UpdatableMaterial = Material & {
 const blink = useBlink()
 const idleEyeSaccades = useIdleEyeSaccades()
 const vrmEmote = ref<ReturnType<typeof useVRMEmote>>()
-const vrmLipSync = useVRMLipSync(currentAudioSource)
+const vrmLipSync = useVRMLipSync(currentAudioSource, externalAudioLevel)
 
 // For sky box update
 const nprProgramVersion = ref(0)
@@ -1020,8 +1022,11 @@ if (import.meta.hot) {
 
 defineExpose({
   getInteractionColliders: () => interactionColliders.value?.colliders ?? [],
-  setExpression(expression: string, intensity = 1) {
-    vrmEmote.value?.setEmotionWithResetAfter(expression, 3000, intensity)
+  setExpression(expression: string, intensity = 1, resetAfterMs = 3000) {
+    if (resetAfterMs > 0)
+      vrmEmote.value?.setEmotionWithResetAfter(expression, resetAfterMs, intensity)
+    else
+      vrmEmote.value?.setEmotion(expression, intensity)
   },
   // NOTICE: This runtime frame hook is intentionally separate from internal VRM model hooks.
   // External callers use it for live pose/tracking input; internal hooks remain reserved for

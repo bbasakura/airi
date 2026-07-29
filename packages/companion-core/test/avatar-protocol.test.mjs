@@ -1,4 +1,5 @@
 import assert from 'node:assert/strict'
+// eslint-disable-next-line test/no-import-node-test
 import test from 'node:test'
 
 import {
@@ -69,6 +70,19 @@ test('maps companion lifecycle events without exposing conversation text', () =>
     state: {
       phase: 'active',
       activity: 'speaking',
+      microphoneMuted: false,
+      outputMuted: false,
+    },
+  })
+
+  assert.deepEqual(companionEventToAvatarEvent({
+    type: 'avatar.state.changed',
+    state: 'thinking',
+  }), {
+    type: 'state',
+    state: {
+      phase: 'active',
+      activity: 'thinking',
       microphoneMuted: false,
       outputMuted: false,
     },

@@ -53,6 +53,7 @@ import { VRMModel } from './Model'
 
 const props = withDefaults(defineProps<{
   currentAudioSource?: AudioBufferSourceNode
+  externalAudioLevel?: number
   cursorPosition?: { x: number, y: number }
   modelSrc?: string
   skyBoxSrc?: string
@@ -753,8 +754,8 @@ watch(directionalLightRotation, (newRotation) => {
 }, { deep: true })
 
 defineExpose({
-  setExpression: (expression: string, intensity = 1) => {
-    modelRef.value?.setExpression(expression, intensity)
+  setExpression: (expression: string, intensity = 1, resetAfterMs = 3000) => {
+    modelRef.value?.setExpression(expression, intensity, resetAfterMs)
   },
   // NOTICE: External runtime hooks are intentionally separate from internal VRM model hooks.
   // This public frame hook is reserved for live pose/tracking input and is forwarded to VRMModel
@@ -841,6 +842,7 @@ defineExpose({
       <VRMModel
         ref="modelRef"
         :current-audio-source="props.currentAudioSource"
+        :external-audio-level="props.externalAudioLevel"
         :cursor-position="props.cursorPosition"
         :last-committed-model-src="lastCommittedModelSrc"
         :model-src="props.modelSrc"

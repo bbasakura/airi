@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict'
 import path from 'node:path'
-
-import test from 'vitest'
+// eslint-disable-next-line test/no-import-node-test
+import test from 'node:test'
 
 import { loadConfig, normalizeHttpUrl, publicConfig } from '../src/config.mjs'
 import { createCompanionEvent, serializeSse } from '../src/protocol.mjs'

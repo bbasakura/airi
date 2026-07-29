@@ -8,6 +8,7 @@ export const AVATAR_PHASES = Object.freeze([
 export const AVATAR_ACTIVITIES = Object.freeze([
   'idle',
   'listening',
+  'thinking',
   'speaking',
 ])
 
@@ -107,7 +108,7 @@ export function companionEventToAvatarEvent(event) {
     if (event.state === 'listening')
       return createAvatarState('listening')
     if (event.state === 'thinking')
-      return createAvatarState('idle')
+      return createAvatarState('thinking')
     if (event.state === 'speaking')
       return createAvatarState('speaking')
     if (event.state === 'idle')
