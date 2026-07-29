@@ -46,7 +46,7 @@ const settings = computed(() => {
       <RippleGrid
         :items="settings"
         :get-key="item => item.to"
-        :columns="1"
+        :columns="{ default: 1, md: 2 }"
         :origin-index="lastClickedIndex"
         @item-click="({ globalIndex }) => setLastClickedIndex(globalIndex)"
       >

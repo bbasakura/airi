@@ -18,17 +18,17 @@ const props = defineProps<{
 <template>
   <div
     flex="~ col"
-    bg="neutral-50 dark:neutral-800"
+    bg="neutral-950/40"
     border="neutral-100 dark:neutral-800/25 hover:primary-500/30 dark:hover:primary-400/30 solid 2"
     drop-shadow="none hover:[0px_4px_4px_rgba(220,220,220,0.4)] active:[0px_0px_0px_rgba(220,220,220,0.25)] dark:hover:none"
     class="menu-icon-status-item"
     transition="all ease-in-out duration-400"
-    w-full cursor-pointer of-hidden rounded-xl
+    w-full cursor-pointer of-hidden rounded-2xl
   >
     <RouterLink
       flex="~ row"
       class="menu-icon-status-item-link"
-      bg="white dark:neutral-900"
+      bg="neutral-900/60 hover:neutral-800/80 backdrop-blur-md"
       transition="all ease-in-out duration-400"
       relative h-full w-full items-center overflow-hidden rounded-lg p-5 text-left
       :to=" props.to"
@@ -102,7 +102,7 @@ const props = defineProps<{
     </RouterLink>
     <div p-2>
       <div v-if="props.configured" size-4 bg="green-500" rounded-full shadow="lg" />
-      <div v-else size-4 border="2 neutral-200 dark:neutral-700" rounded-full bg="white dark:neutral-900" />
+      <div v-else size-4 border="2 neutral-200 dark:neutral-700" rounded-full bg="neutral-900/60 hover:neutral-800/80 backdrop-blur-md" />
     </div>
   </div>
 </template>

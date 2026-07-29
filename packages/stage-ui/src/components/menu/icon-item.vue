@@ -12,12 +12,12 @@ defineProps<{
   <RouterLink
     box="border"
     flex="~ row"
-    bg="neutral-50 dark:neutral-900"
-    border="neutral-100 dark:neutral-800/25 hover:primary-500/30 dark:hover:primary-400/30 solid 2"
+    bg="neutral-900/60 hover:neutral-800/80 backdrop-blur-md"
+    border="neutral-800/60 hover:primary-500/50 dark:hover:primary-400/50 solid 1"
     drop-shadow="none hover:[0px_4px_4px_rgba(220,220,220,0.4)] active:[0px_0px_0px_rgba(220,220,220,0.25)] dark:hover:none"
     class="menu-icon-item"
     transition="all ease-in-out duration-400"
-    relative w-full items-center overflow-hidden rounded-lg p-5 text-left
+    relative w-full items-center overflow-hidden rounded-2xl p-5 text-left
     cursor="pointer"
     :to="to"
   >

@@ -84,7 +84,7 @@ onMounted(() => updateThemeColor())
     <!-- Header -->
     <div
       v-if="!isStageTamagotchi()"
-      :class="['px-0 py-1 hidden sm:block', 'md:px-3 md:py-3', 'w-full gap-2', 'bg-$bg-color']"
+      :class="['px-0 py-1 hidden sm:block', 'md:px-3 md:py-3', 'w-full gap-2', 'bg-transparent']"
     >
       <HeaderLink />
     </div>
@@ -93,7 +93,7 @@ onMounted(() => updateThemeColor())
       :class="[
         'px-3 py-0 2xl:max-w-screen-2xl md:py-0 xl:px-4',
         isStageTamagotchi() ? 'sm:max-h-[calc(100%)] max-h-[calc(100%)]' : 'sm:max-h-[calc(100%-56px)] max-h-[calc(100%-40px)]',
-        'mx-auto flex min-h-0 w-full flex-1 flex-col',
+        'backdrop-blur-xl bg-neutral-950/85 border border-white/10 shadow-2xl rounded-2xl p-4 md:p-6 my-2 mx-auto flex min-h-0 w-full flex-1 flex-col',
       ]"
     >
       <PageHeader
