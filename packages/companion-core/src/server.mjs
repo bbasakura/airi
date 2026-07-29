@@ -5,18 +5,42 @@ import { Readable } from 'node:stream'
 
 import { OpenAICompatibleChatClient } from './adapters/openai-compatible.mjs'
 import { VoiceboxClient } from './adapters/voicebox.mjs'
+import {
+  AvatarEventHub,
+  companionEventToAvatarEvent,
+  normalizeAvatarEvent,
+} from './avatar-protocol.mjs'
 import { loadConfig, publicConfig } from './config.mjs'
 import { CompanionError, toErrorPayload } from './errors.mjs'
 import { serializeSse } from './protocol.mjs'
 import { ConversationRuntime } from './runtime/conversation-runtime.mjs'
 
 const LOOPBACK_HOSTS = new Set(['127.0.0.1', 'localhost', '[::1]', '::1'])
+const CODEX_APP_ORIGIN = /^codex-app:\/\/[A-Za-z0-9._~-]*$/i
+const MAX_AVATAR_EVENT_BYTES = 64 * 1024
 
-function isAllowedOrigin(origin) {
+export function originAllowed(origin) {
   if (!origin)
+    return true
+  if (CODEX_APP_ORIGIN.test(origin))
     return true
   try {
     return LOOPBACK_HOSTS.has(new URL(origin).hostname)
+  }
+  catch {
+    return false
+  }
+}
+
+export function hostAllowed(hostHeader) {
+  if (typeof hostHeader !== 'string' || !hostHeader)
+    return false
+  try {
+    const url = new URL(`http://${hostHeader}`)
+    return url.username === ''
+      && url.password === ''
+      && url.pathname === '/'
+      && LOOPBACK_HOSTS.has(url.hostname.toLowerCase())
   }
   catch {
     return false
@@ -27,7 +51,7 @@ function corsHeaders(origin) {
   return {
     'Access-Control-Allow-Origin': origin || '*',
     'Access-Control-Allow-Methods': 'GET, POST, DELETE, OPTIONS',
-    'Access-Control-Allow-Headers': 'Content-Type, Range, X-Audio-Filename',
+    'Access-Control-Allow-Headers': 'Content-Type, Last-Event-ID, Range, X-Audio-Filename',
     'Access-Control-Expose-Headers': 'Content-Length, Content-Range, Accept-Ranges',
     'Cache-Control': 'no-store',
     Vary: 'Origin',
@@ -77,7 +101,7 @@ async function writeEvent(response, event) {
     await once(response, 'drain')
 }
 
-async function streamTurn(response, origin, conversationId, runtime, events) {
+async function streamTurn(response, origin, conversationId, runtime, avatarHub, events) {
   response.writeHead(200, {
     ...corsHeaders(origin),
     'Content-Type': 'text/event-stream; charset=utf-8',
@@ -95,11 +119,34 @@ async function streamTurn(response, origin, conversationId, runtime, events) {
   for await (const event of events) {
     if (response.destroyed)
       break
+    const avatarEvent = companionEventToAvatarEvent(event)
+    if (avatarEvent)
+      avatarHub.publish(avatarEvent)
     await writeEvent(response, event)
   }
 
   completed = true
   response.end()
+}
+
+function streamAvatarEvents(response, origin, avatarHub) {
+  response.writeHead(200, {
+    ...corsHeaders(origin),
+    'Content-Type': 'text/event-stream; charset=utf-8',
+    Connection: 'keep-alive',
+    'X-Accel-Buffering': 'no',
+  })
+  response.flushHeaders()
+
+  const snapshot = avatarHub.snapshot()
+  if (snapshot.lastState)
+    response.write(serializeSse(snapshot.lastState))
+
+  const unsubscribe = avatarHub.subscribe((event) => {
+    if (!response.destroyed)
+      response.write(serializeSse(event))
+  })
+  response.once('close', unsubscribe)
 }
 
 function conversationRoute(pathname) {
@@ -140,7 +187,12 @@ function createDefaultDependencies(config, fetchImpl) {
     maxHistoryMessages: config.conversation.maxHistoryMessages,
     speechEnabled: config.conversation.speechEnabled,
   })
-  return { chat, voicebox, runtime }
+  return {
+    chat,
+    voicebox,
+    runtime,
+    avatarHub: new AvatarEventHub(),
+  }
 }
 
 export function createCompanionServer({
@@ -149,17 +201,29 @@ export function createCompanionServer({
   chat,
   voicebox,
   runtime,
+  avatarHub,
 } = {}) {
   const defaults = createDefaultDependencies(config, fetchImpl)
   const dependencies = {
     chat: chat || defaults.chat,
     voicebox: voicebox || defaults.voicebox,
     runtime: runtime || defaults.runtime,
+    avatarHub: avatarHub || defaults.avatarHub,
   }
 
   return createServer(async (request, response) => {
     const origin = request.headers.origin
-    if (!isAllowedOrigin(origin)) {
+    if (!hostAllowed(request.headers.host)) {
+      sendJson(response, 403, {
+        error: {
+          code: 'HOST_NOT_ALLOWED',
+          message: 'Only loopback Host headers may access the companion sidecar',
+        },
+      })
+      return
+    }
+
+    if (!originAllowed(origin)) {
       sendJson(response, 403, {
         error: {
           code: 'ORIGIN_NOT_ALLOWED',
@@ -181,8 +245,9 @@ export function createCompanionServer({
       if (request.method === 'GET' && url.pathname === '/') {
         sendJson(response, 200, {
           name: 'AIRI Companion Core',
-          version: '0.1.0',
+          version: '0.2.0',
           protocol: 'companion-events/v1',
+          avatarProtocol: 'avatar-events/v1',
         }, origin)
         return
       }
@@ -196,12 +261,43 @@ export function createCompanionServer({
           status: chatHealth.ok && voiceboxHealth.ok ? 'ok' : 'degraded',
           chat: chatHealth,
           voicebox: voiceboxHealth,
+          avatar: dependencies.avatarHub.snapshot(),
         }, origin)
         return
       }
 
       if (request.method === 'GET' && url.pathname === '/v1/config') {
         sendJson(response, 200, publicConfig(config), origin)
+        return
+      }
+
+      if (request.method === 'GET' && url.pathname === '/v1/avatar/status') {
+        sendJson(response, 200, {
+          ok: true,
+          ...dependencies.avatarHub.snapshot(),
+        }, origin)
+        return
+      }
+
+      if (request.method === 'GET' && url.pathname === '/v1/avatar/events') {
+        streamAvatarEvents(response, origin, dependencies.avatarHub)
+        return
+      }
+
+      if (request.method === 'POST' && url.pathname === '/v1/avatar/events') {
+        const body = await readJson(
+          request,
+          Math.min(config.server.maxJsonBytes, MAX_AVATAR_EVENT_BYTES),
+        )
+        const normalized = normalizeAvatarEvent(body)
+        if (!normalized) {
+          throw new CompanionError('Avatar event is invalid', {
+            code: 'INVALID_AVATAR_EVENT',
+            status: 422,
+          })
+        }
+        const event = dependencies.avatarHub.publish(normalized)
+        sendJson(response, 202, { accepted: true, event }, origin)
         return
       }
 
@@ -238,6 +334,7 @@ export function createCompanionServer({
           origin,
           route.conversationId,
           dependencies.runtime,
+          dependencies.avatarHub,
           dependencies.runtime.runTextTurn({
             conversationId: route.conversationId,
             text: body.text,
@@ -257,6 +354,7 @@ export function createCompanionServer({
           origin,
           route.conversationId,
           dependencies.runtime,
+          dependencies.avatarHub,
           dependencies.runtime.runVoiceTurn({
             conversationId: route.conversationId,
             audio,

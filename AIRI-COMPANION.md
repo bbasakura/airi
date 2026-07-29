@@ -37,6 +37,7 @@ The first custom package is `packages/companion-core`. It provides:
 - OpenAI-compatible streamed chat for Tuzi through OpenCodex
 - Voicebox transcription, speech jobs, polling, and audio proxying
 - normalized companion events for UI, avatar, and Codex clients
+- a Persona-inspired private avatar channel for state, level, and animations
 - per-conversation interruption with stale-result suppression
 - a local HTTP/SSE sidecar with no third-party runtime dependencies
 
