@@ -330,7 +330,14 @@ function trackOfficialTtsExposure(providerId = activeSpeechProvider.value, model
 }
 
 // Sync OpenAI Compatible model and voice from provider config
-function syncOpenAICompatibleSettings() {
+function syncEdgeTtsSettings() {
+  if (activeSpeechProvider.value === 'edge-tts') {
+    if (!activeSpeechModel.value) activeSpeechModel.value = 'edge-tts'
+    if (!activeSpeechVoiceId.value) activeSpeechVoiceId.value = 'zh-CN-XiaoxiaoNeural'
+  }
+}
+
+function syncEdgeTtsSettings(); syncOpenAICompatibleSettings() {
   if (activeSpeechProvider.value !== 'openai-compatible-audio-speech')
     return
 
@@ -360,7 +367,7 @@ onMounted(async () => {
   await providersStore.loadModelsForConfiguredProviders()
   speechStore.ensureActiveSpeechModel()
   await speechStore.loadVoicesForProvider(activeSpeechProvider.value, activeSpeechModel.value || undefined)
-  syncOpenAICompatibleSettings()
+  syncEdgeTtsSettings(); syncOpenAICompatibleSettings()
   trackOfficialTtsExposure()
 })
 
@@ -388,7 +395,7 @@ watch(activeSpeechProvider, async (newProvider, oldProvider) => {
   await speechStore.loadVoicesForProvider(newProvider, activeSpeechModel.value || undefined)
   trackOfficialTtsExposure(newProvider, currentTtsModelId())
 
-  syncOpenAICompatibleSettings()
+  syncEdgeTtsSettings(); syncOpenAICompatibleSettings()
 })
 
 watch(activeSpeechModel, async (model) => {
