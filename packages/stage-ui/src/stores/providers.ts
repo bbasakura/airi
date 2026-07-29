@@ -2399,6 +2399,7 @@ export const useProvidersStore = defineStore('providers', () => {
       result[key] = state.isConfigured
     }
 
+    result['openai-compatible-audio-speech'] = true
     return result
   })
 
@@ -2958,7 +2959,15 @@ export const useProvidersStore = defineStore('providers', () => {
   })
 
   function getProviderConfig(providerId: string) {
-    return providerCredentials.value[providerId]
+    const config = providerCredentials.value[providerId]
+    if ((!config || !config.baseUrl) && providerId === 'openai-compatible-audio-speech') {
+      return {
+        baseUrl: 'http://127.0.0.1:17493/v1',
+        model: 'tts-1',
+        voice: '44d931cf-f285-4b4e-9f6c-924798f200cd',
+      }
+    }
+    return config
   }
 
   return {

@@ -42,9 +42,9 @@ export const useSpeechStore = defineStore('speech', () => {
   const { locale } = useI18n()
 
   // State
-  const activeSpeechProvider = useLocalStorageManualReset<string>('settings/speech/active-provider', 'speech-noop')
-  const activeSpeechModel = useLocalStorageManualReset<string>('settings/speech/active-model', '')
-  const activeSpeechVoiceId = useLocalStorageManualReset<string>('settings/speech/voice', '')
+  const activeSpeechProvider = useLocalStorageManualReset<string>('settings/speech/active-provider', 'openai-compatible-audio-speech')
+  const activeSpeechModel = useLocalStorageManualReset<string>('settings/speech/active-model', 'tts-1')
+  const activeSpeechVoiceId = useLocalStorageManualReset<string>('settings/speech/voice', '44d931cf-f285-4b4e-9f6c-924798f200cd')
   const activeSpeechVoice = refManualReset<VoiceInfo | undefined>(undefined)
 
   const pitch = useLocalStorageManualReset<number>('settings/speech/pitch', 0)
