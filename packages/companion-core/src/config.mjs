@@ -1,4 +1,8 @@
+import path from 'node:path'
+import { fileURLToPath } from 'node:url'
+
 const DEFAULT_SYSTEM_PROMPT = '你是一个自然、可靠、有长期陪伴感的中文 AI 伴侣。始终使用简体中文，回答口语化、简洁，不使用 Markdown。'
+const DEFAULT_ERII_ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../../..')
 
 function parseInteger(value, fallback, { min, max }) {
   const parsed = Number.parseInt(value ?? '', 10)
@@ -24,8 +28,23 @@ export function normalizeHttpUrl(value, fallback) {
   return url.toString().replace(/\/$/, '')
 }
 
+function resolveRuntimePath(value, fallback, rootDir) {
+  const selected = String(value ?? '').trim() || fallback
+  return path.resolve(rootDir, selected)
+}
+
 export function loadConfig(env = process.env) {
+  const rootDir = path.resolve(String(env.ERII_ROOT ?? '').trim() || DEFAULT_ERII_ROOT)
+
   return {
+    runtime: {
+      rootDir,
+      dataDir: resolveRuntimePath(env.ERII_DATA_DIR, 'data', rootDir),
+      modelsDir: resolveRuntimePath(env.ERII_MODELS_DIR, 'models', rootDir),
+      cacheDir: resolveRuntimePath(env.ERII_CACHE_DIR, 'cache', rootDir),
+      logsDir: resolveRuntimePath(env.ERII_LOGS_DIR, 'logs', rootDir),
+      configDir: resolveRuntimePath(env.ERII_CONFIG_DIR, 'config', rootDir),
+    },
     server: {
       host: env.COMPANION_HOST || '127.0.0.1',
       port: parseInteger(env.COMPANION_PORT, 17321, { min: 1, max: 65535 }),

@@ -1,4 +1,5 @@
 import assert from 'node:assert/strict'
+import path from 'node:path'
 import test from 'node:test'
 
 import { loadConfig, normalizeHttpUrl, publicConfig } from '../src/config.mjs'
@@ -28,6 +29,26 @@ test('normalizes provider URLs and clamps numeric configuration', () => {
     maxTokens: 1,
   })
   assert.equal(JSON.stringify(publicConfig(config)).includes('secret'), false)
+})
+
+test('resolves mutable runtime directories beneath the Erii root', () => {
+  const rootDir = path.resolve('D:\\soft\\Erii')
+  const sharedModelsDir = path.resolve('D:\\shared-models')
+  const config = loadConfig({
+    ERII_ROOT: rootDir,
+    ERII_MODELS_DIR: sharedModelsDir,
+    ERII_CACHE_DIR: 'runtime-cache',
+  })
+
+  assert.deepEqual(config.runtime, {
+    rootDir,
+    dataDir: path.join(rootDir, 'data'),
+    modelsDir: sharedModelsDir,
+    cacheDir: path.join(rootDir, 'runtime-cache'),
+    logsDir: path.join(rootDir, 'logs'),
+    configDir: path.join(rootDir, 'config'),
+  })
+  assert.equal('runtime' in publicConfig(config), false)
 })
 
 test('serializes normalized companion events as SSE', () => {

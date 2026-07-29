@@ -121,6 +121,11 @@ web-ext.config.ts
 # Data
 .postgres
 twitter-session.json
+/data/
+/models/
+/cache/
+/logs/
+/config/local/
 
 # Symlinks created by nix build
 result*
