@@ -161,3 +161,51 @@ export class OpenAICompatibleChatClient {
     }
   }
 }
+
+export class FallbackChatClient {
+  constructor({ primary, fallback }) {
+    this.primary = primary
+    this.fallback = fallback
+  }
+
+  async health(signal) {
+    try {
+      const res = await this.primary.health(signal)
+      if (res.ok)
+        return res
+    }
+    catch (error) {
+      if (!this.fallback)
+        throw error
+    }
+
+    if (this.fallback) {
+      const fallbackRes = await this.fallback.health(signal)
+      return {
+        ...fallbackRes,
+        fallbackActive: true,
+      }
+    }
+
+    return { ok: false, error: 'All chat clients unavailable' }
+  }
+
+  async *streamChat(messages, options = {}) {
+    let started = false
+    try {
+      for await (const delta of this.primary.streamChat(messages, options)) {
+        started = true
+        yield delta
+      }
+    }
+    catch (error) {
+      if (started || !this.fallback || options.signal?.aborted || isAbortError(error))
+        throw error
+      console.warn('[Companion Core] Primary chat provider failed, falling back to local model:', error.message)
+      for await (const delta of this.fallback.streamChat(messages, options)) {
+        yield delta
+      }
+    }
+  }
+}
+

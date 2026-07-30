@@ -72,6 +72,13 @@ export function loadConfig(env = process.env) {
       apiKey: env.TUZI_API_KEY || '',
       maxTokens: parseInteger(env.TUZI_MAX_TOKENS, 300, { min: 1, max: 32768 }),
     },
+    fallbackChat: {
+      baseUrl: normalizeHttpUrl(env.FALLBACK_CHAT_BASE_URL, 'http://127.0.0.1:11434/v1'),
+      model: env.FALLBACK_CHAT_MODEL || 'qwen2.5:1.5b',
+      apiKey: env.FALLBACK_CHAT_API_KEY || '',
+      maxTokens: parseInteger(env.FALLBACK_CHAT_MAX_TOKENS, 300, { min: 1, max: 32768 }),
+      enabled: parseBoolean(env.FALLBACK_CHAT_ENABLED, true),
+    },
     voicebox: {
       baseUrl: normalizeHttpUrl(env.VOICEBOX_BASE_URL, 'http://127.0.0.1:17493'),
       profile: env.VOICEBOX_PROFILE || '',
