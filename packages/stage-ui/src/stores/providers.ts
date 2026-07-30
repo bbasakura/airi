@@ -475,6 +475,15 @@ export const useProvidersStore = defineStore('providers', () => {
       tasks: ['text-to-speech', 'tts'],
       isAvailableBy: isStageTamagotchi,
       creator: createOpenAI,
+      defaultConfig: {
+        baseUrl: 'http://127.0.0.1:17493/v1',
+        model: 'base',
+      },
+      models: [
+        { id: 'base', name: 'base (Whisper 本地)' },
+        { id: 'small', name: 'small (Whisper 本地)' },
+        { id: 'medium', name: 'medium (Whisper 本地)' },
+      ],
       validation: [],
       validators: {
         chatPingCheckAvailable: false,
@@ -506,6 +515,17 @@ export const useProvidersStore = defineStore('providers', () => {
       tasks: ['speech-to-text', 'automatic-speech-recognition', 'asr', 'stt'],
       isAvailableBy: isStageTamagotchi,
       creator: createOpenAI,
+      defaultConfig: {
+        baseUrl: 'http://127.0.0.1:17493/v1',
+        model: 'base',
+      },
+      capabilities: {
+        listModels: async () => [
+          { id: 'base', name: 'base (Whisper)', provider: 'app-local-audio-transcription' },
+          { id: 'small', name: 'small (Whisper)', provider: 'app-local-audio-transcription' },
+          { id: 'medium', name: 'medium (Whisper)', provider: 'app-local-audio-transcription' },
+        ],
+      },
       validation: [],
       validators: {
         chatPingCheckAvailable: false,
@@ -538,6 +558,11 @@ export const useProvidersStore = defineStore('providers', () => {
       tasks: ['speech-to-text', 'automatic-speech-recognition', 'asr', 'stt'],
       isAvailableBy: isStageTamagotchi,
       creator: createOpenAI,
+      capabilities: {
+        listModels: async () => [
+          { id: 'SenseVoiceSmall', name: 'SenseVoiceSmall (中文⭐)', provider: 'funasr-sensevoice' },
+        ],
+      },
       defaultConfig: {
         baseUrl: 'http://127.0.0.1:17494/v1',
         model: 'SenseVoiceSmall',
