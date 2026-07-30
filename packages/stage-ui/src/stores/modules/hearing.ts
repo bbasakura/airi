@@ -318,7 +318,7 @@ export const useHearingStore = defineStore('hearing-store', () => {
   } = useAnalytics()
 
   // State
-  const activeTranscriptionProvider = useLocalStorageManualReset('settings/hearing/active-provider', 'voicebox-stt')
+  const activeTranscriptionProvider = useLocalStorageManualReset('settings/hearing/active-provider', 'app-local-audio-transcription')
   const activeTranscriptionModel = useLocalStorageManualReset('settings/hearing/active-model', 'base')
   const activeCustomModelName = useLocalStorageManualReset('settings/hearing/active-custom-model', '')
   const transcriptionModelSearchQuery = refManualReset<string>('')
