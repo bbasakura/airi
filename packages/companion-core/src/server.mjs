@@ -153,7 +153,7 @@ async function streamLocalAvatarModel(request, response, origin, modelPath) {
     ...corsHeaders(origin),
     'Accept-Ranges': 'bytes',
     'Content-Length': contentLength,
-    'Content-Type': 'model/gltf-binary',
+    'Content-Type': modelPath.endsWith('.mp3') ? 'audio/mpeg' : modelPath.endsWith('.wav') ? 'audio/wav' : 'model/gltf-binary',
   }
   if (range)
     headers['Content-Range'] = `bytes ${range.start}-${range.end}/${modelStat.size}`
@@ -309,6 +309,7 @@ export function createCompanionServer({
   fetchImpl = globalThis.fetch,
   chat,
   voicebox,
+  edgeTts,
   runtime,
   avatarHub,
 } = {}) {
@@ -316,6 +317,7 @@ export function createCompanionServer({
   const dependencies = {
     chat: chat || defaults.chat,
     voicebox: voicebox || defaults.voicebox,
+    edgeTts: edgeTts || defaults.edgeTts,
     runtime: runtime || defaults.runtime,
     avatarHub: avatarHub || defaults.avatarHub,
   }
@@ -420,7 +422,23 @@ export function createCompanionServer({
         return
       }
 
-      const audioMatch = url.pathname.match(/^\/v1\/audio\/([^/]+)$/)
+              if (request.method === 'POST' && (url.pathname === '/v1/audio/speech' || url.pathname === '/v1/speech')) {
+          const body = await readJson(request, config.server.maxJsonBytes)
+          const inputText = String(body.input || body.text || '').trim()
+          if (!inputText) {
+            throw new CompanionError('Speech input text is required', { code: 'TEXT_REQUIRED', status: 400 })
+          }
+
+          const voice = String(body.voice || 'zh-CN-XiaoxiaoNeural').trim()
+          const speechResult = await dependencies.edgeTts.speak(inputText, { voice })
+          const audioFileName = speechResult.id
+          const localPath = path.resolve(config.runtime.cacheDir, audioFileName)
+
+          await streamLocalAvatarModel(request, response, origin, localPath)
+          return
+        }
+
+        const audioMatch = url.pathname.match(/^\/v1\/audio\/([^/]+)$/)
       if (request.method === 'GET' && audioMatch) {
         const requestedFile = decodeURIComponent(audioMatch[1])
         const localPath = path.resolve(config.runtime.cacheDir, requestedFile)
