@@ -757,7 +757,7 @@ const cursorPosition = computed(() => ({
           'transition-opacity duration-250 ease-in-out',
         ]"
       >
-        <StatusIsland v-if="IS_DEV" ref="statusIslandRef" />
+        <!-- Connection status moved to Settings > Connection -->
         <ResourceStatusIsland />
         <WidgetStage
           ref="widgetStageRef"
