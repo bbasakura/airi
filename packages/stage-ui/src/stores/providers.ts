@@ -526,6 +526,41 @@ export const useProvidersStore = defineStore('providers', () => {
         },
       },
     }),
+
+    'funasr-sensevoice': buildOpenAICompatibleProvider({
+      id: 'funasr-sensevoice',
+      name: 'FunASR SenseVoice (本地中文)',
+      nameKey: 'FunASR SenseVoice (本地中文)',
+      descriptionKey: 'FunASR SenseVoice (本地中文)',
+      icon: 'i-lobe-icons:alibaba',
+      description: '阿里巴巴 SenseVoice 本地语音识别，中文精度最高，无需 API Key',
+      category: 'transcription',
+      tasks: ['speech-to-text', 'automatic-speech-recognition', 'asr', 'stt'],
+      isAvailableBy: isStageTamagotchi,
+      creator: createOpenAI,
+      defaultConfig: {
+        baseUrl: 'http://127.0.0.1:17494/v1',
+        model: 'SenseVoiceSmall',
+      },
+      validation: [],
+      validators: {
+        chatPingCheckAvailable: false,
+        validateProviderConfig: (config) => {
+          if (!config.baseUrl) {
+            return {
+              errors: [new Error('Base URL is required. Start funasr-server first.')],
+              reason: 'FunASR 服务未启动，请先运行 funasr-server/start.bat',
+              valid: false,
+            }
+          }
+          return {
+            errors: [],
+            reason: '',
+            valid: true,
+          }
+        },
+      },
+    }),
     'browser-local-audio-speech': buildOpenAICompatibleProvider({
       id: 'browser-local-audio-speech',
       name: 'Browser (Local)',

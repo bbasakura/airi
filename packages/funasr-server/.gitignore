@@ -1,0 +1,8 @@
+# Model files (too large for git)
+hf-models/
+models/
+*.log
+server.log
+server_err.log
+__pycache__/
+*.pyc

@@ -1115,6 +1115,29 @@ export const useHearingSpeechInputPipeline = defineStore('modules:hearing:speech
 
   const HALLUCINATIONS = new Set(['you', 'you.', 'you!', 'you?', 'thank you', 'thank you.', 'thanks', 'thanks.', 'bye', 'bye.'])
 
+  async function transcribeWithFunASR(recording: Blob): Promise<string | undefined> {
+    try {
+      const form = new FormData()
+      form.append("file", recording, "recording.wav")
+      form.append("language", "zh")
+      const response = await fetch("http://127.0.0.1:17494/v1/audio/transcriptions", {
+        method: "POST",
+        body: form,
+      })
+      if (!response.ok)
+        return undefined
+      const data = await response.json()
+      const text = String(data?.text || "").trim()
+      if (!text)
+        return undefined
+      console.info("[Hearing Pipeline] FunASR SenseVoice result:", text)
+      return text
+    }
+    catch (err) {
+      return undefined
+    }
+  }
+
   async function transcribeWithLocalVoicebox(recording: Blob): Promise<string | undefined> {
     try {
       const form = new FormData()
