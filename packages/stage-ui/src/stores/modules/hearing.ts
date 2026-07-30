@@ -1213,14 +1213,23 @@ export const useHearingSpeechInputPipeline = defineStore('modules:hearing:speech
       return text
     }
     catch (err) {
+      const msg = errorMessage(err) || ''
+      if (msg.includes('401') || msg.includes('API key') || msg.includes('Authorization')) {
+        console.warn('[Hearing Pipeline] Active STT provider lacks API key, auto-switching to app-local-audio-transcription')
+        activeTranscriptionProvider.value = 'app-local-audio-transcription'
+      }
+
       const localText = await transcribeWithLocalVoicebox(recording)
       if (localText) {
         console.info('[Hearing Pipeline] Successfully transcribed via local Voicebox fallback:', localText)
         error.value = undefined
         return localText
       }
-      error.value = errorMessage(err)
-      console.error('Error generating transcription:', error.value)
+
+      if (!msg.includes('401') && !msg.includes('API key')) {
+        error.value = msg
+      }
+      console.warn('[Hearing Pipeline] Transcription warning:', msg)
     }
   }
 
